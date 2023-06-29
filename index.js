@@ -57,7 +57,7 @@ app.post("/lead", async (req, res) => {
     });
 
     // Send text message
-    sendText(`+1${phone}`);
+    sendText(phone);
 
     return res.status(200).json(newLead);
   } catch (error) {
