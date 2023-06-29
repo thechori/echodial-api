@@ -8,14 +8,14 @@ const { extractErrorMessage } = require("./lib/error");
 const { sendText } = require("./scripts/contact-leads");
 
 const app = express();
-const port = 8080;
+const port = 3001;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
 app.get("/", (req, res) => {
-  res.send(process.env.SECRET || "l34ds");
+  res.send("l34ds");
 });
 
 app.get("/lead", async (req, res) => {
