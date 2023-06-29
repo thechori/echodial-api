@@ -7,7 +7,7 @@ const db = require("./db");
 const { extractErrorMessage } = require("./lib/error");
 
 const app = express();
-const port = 3000;
+const port = 3005;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));

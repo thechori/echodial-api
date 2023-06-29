@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon",
-    "start": "node index.js"
+    "start": "node index.js",
+    "docker:build": "docker build . --tag ghcr.io/teodoro-systems/l34ds-api:latest",
+    "docker:run": "docker run -d -p 3005:3005 ghcr.io/teodoro-systems/l34ds-api:latest"
   },
   "author": "Teodoro Systems LLC",
   "license": "ISC",
