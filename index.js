@@ -14,7 +14,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
 
 app.get("/", (req, res) => {
-  res.send("l34ds");
+  res.send(process.env.SECRET || "l34ds");
 });
 
 app.get("/lead", async (req, res) => {

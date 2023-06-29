@@ -9,6 +9,12 @@ env:
   DROPLET_IP: 137.184.6.236
   DOCKER_IMAGE: ghcr.io/teodoro-systems/l34ds-api:latest
   NODEJS_RUNTIME_PORT: 3005
+  DB_USER: ${{ secrets.DB_USER }}
+  DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+  DB_HOST: ${{ secrets.DB_HOST }}
+  DB_PORT: ${{ secrets.DB_PORT }}
+  DB_DATABASE: ${{ secrets.DB_DATABASE }}
+  DB_CA_CERT: ${{ secrets.DB_CA_CERT }}
 
 jobs:
   build_and_push_to_registry:
@@ -26,6 +32,13 @@ jobs:
           password: ${{ secrets.CR_PAT }}
 
       - name: Build and push Docker image
+        env:
+          DB_USER: ${{ env.DB_USER }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          DB_HOST: ${{ env.DB_HOST }}
+          DB_PORT: ${{ env.DB_PORT }}
+          DB_DATABASE: ${{ env.DB_DATABASE }}
+          DB_CA_CERT: ${{ env.DB_CA_CERT }}
         run: |
           docker build . --tag ${{ env.DOCKER_IMAGE }}
           docker push ${{ env.DOCKER_IMAGE }}
