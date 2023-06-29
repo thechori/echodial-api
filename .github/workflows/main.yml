@@ -32,13 +32,6 @@ jobs:
           password: ${{ secrets.CR_PAT }}
 
       - name: Build and push Docker image
-        env:
-          DB_USER: ${{ env.DB_USER }}
-          DB_PASSWORD: ${{ env.DB_PASSWORD }}
-          DB_HOST: ${{ env.DB_HOST }}
-          DB_PORT: ${{ env.DB_PORT }}
-          DB_DATABASE: ${{ env.DB_DATABASE }}
-          DB_CA_CERT: ${{ env.DB_CA_CERT }}
         run: |
           docker build . --tag ${{ env.DOCKER_IMAGE }}
           docker push ${{ env.DOCKER_IMAGE }}
@@ -56,6 +49,13 @@ jobs:
           ssh-keyscan -H ${{ env.DROPLET_IP }} >> ~/.ssh/known_hosts
 
       - name: Access Droplet and start container
+        env:
+          DB_USER: ${{ env.DB_USER }}
+          DB_PASSWORD: ${{ env.DB_PASSWORD }}
+          DB_HOST: ${{ env.DB_HOST }}
+          DB_PORT: ${{ env.DB_PORT }}
+          DB_DATABASE: ${{ env.DB_DATABASE }}
+          DB_CA_CERT: ${{ env.DB_CA_CERT }}
         run: |
           ssh root@${{ env.DROPLET_IP }} '
             echo "${{ secrets.CR_PAT }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin 
