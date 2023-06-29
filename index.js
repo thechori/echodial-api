@@ -5,6 +5,7 @@ const bodyParser = require("body-parser");
 //
 const db = require("./db");
 const { extractErrorMessage } = require("./lib/error");
+const { sendText } = require("./scripts/contact-leads");
 
 const app = express();
 const port = 3005;
@@ -27,8 +28,6 @@ app.get("/lead", async (req, res) => {
 });
 
 app.post("/lead", async (req, res) => {
-  console.log("got a lead", req.body);
-
   // submit to DB
   const {
     first_name,
@@ -56,6 +55,9 @@ app.post("/lead", async (req, res) => {
       state,
       zip,
     });
+
+    // Send text message
+    sendText(`+1${phone}`);
 
     return res.status(200).json(newLead);
   } catch (error) {
