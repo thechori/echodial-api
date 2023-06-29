@@ -8,7 +8,7 @@ const { extractErrorMessage } = require("./lib/error");
 const { sendText } = require("./scripts/contact-leads");
 
 const app = express();
-const port = 3005;
+const port = 8080;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
