@@ -4,7 +4,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const { MessagingResponse } = require("twilio").twiml;
 //
-const db = require("./db");
+const db = require("./lib/db");
 const { extractErrorMessage } = require("./lib/error");
 const { sendText } = require("./scripts/contact-leads");
 

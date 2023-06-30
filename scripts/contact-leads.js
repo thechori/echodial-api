@@ -1,4 +1,4 @@
-const client = require("../lib/twilio/client");
+const client = require("../lib/twilio");
 const numbers = require("../config/numbers");
 
 function sendText(toNumber) {
