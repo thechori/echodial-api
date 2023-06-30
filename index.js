@@ -7,6 +7,8 @@ const { MessagingResponse } = require("twilio").twiml;
 const db = require("./lib/db");
 const { extractErrorMessage } = require("./lib/error");
 const { sendText } = require("./scripts/contact-leads");
+const numbers = require("./config/numbers");
+const { addMinutes } = require("date-fns");
 
 const app = express();
 const port = 3001;
@@ -19,7 +21,7 @@ app.get("/", (req, res) => {
   res.send("l34ds");
 });
 
-/**
+/*
   req.body: {
    ToCountry: 'US',
    ToState: 'TX',
@@ -51,12 +53,19 @@ app.post("/sms", (req, res) => {
   const { Body, From } = req.body;
 
   // Check for an existing conversation
+  // FIND * IN LeadMessage WHERE phone = FROM ORDER BY created_at GET FIRST
+  // IF messageCount = 0 , greet them
+  // IF messageCount =
+
+  // Add 1 minute to Date.now()
+  const scheduledTime = addMinutes(Date.now(), 1);
 
   client.messages
     .create({
       body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
-      to: toNumber,
-      from: myNewFriendswoodNumber,
+      to: From,
+      from: numbers.barker,
+      sendAt: scheduledTime,
     })
     .then((message) => console.log(message.sid));
 

@@ -1,17 +1,26 @@
 const client = require("../lib/twilio");
 const numbers = require("../config/numbers");
+const { addMinutes } = require("date-fns");
 
 function sendText(toNumber) {
+  // Add 1 minute to Date.now()
+  // Note: might need to crank this up to 15 per the docs
+  const scheduledTime = addMinutes(Date.now(), 16);
+
   client.messages
     .create({
       body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
       to: toNumber,
       from: numbers.barker,
+      scheduleType: "fixed",
+      sendAt: scheduledTime,
+      messagingServiceSid: "MG6234abd454d8a89735a74ce3242c0c9b",
     })
     .then((message) => console.log(message.sid));
 }
 
-exports.sendText = sendText;
+sendText("+18326460869");
+// exports.sendText = sendText;
 
 // WORKS!
 // client.calls
