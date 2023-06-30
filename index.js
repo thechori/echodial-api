@@ -19,11 +19,48 @@ app.get("/", (req, res) => {
   res.send("l34ds");
 });
 
+/**
+  req.body: {
+   ToCountry: 'US',
+   ToState: 'TX',
+   SmsMessageSid: 'SM76a85162db85d1ab9e46dc77d4c45095',
+   NumMedia: '0',
+   ToCity: 'HOUSTON',
+   FromZip: '77097',
+   SmsSid: 'SM76a85162db85d1ab9e46dc77d4c45095',
+   FromState: 'TX',
+   SmsStatus: 'received',
+   FromCity: 'HOUSTON',
+   Body: 'Hi',
+   FromCountry: 'US',
+   To: '+12812068992',
+   ToZip: '77079',
+   NumSegments: '1',
+   MessageSid: 'SM76a85162db85d1ab9e46dc77d4c45095',
+   AccountSid: 'AC2c2ecb0f9459a967800a799e0abe3129',
+   From: '+18326460869',
+   ApiVersion: '2010-04-01'
+ }
+ */
+
 app.post("/sms", (req, res) => {
   const twiml = new MessagingResponse();
 
-  console.log("req.body", req.body);
+  // message: req.body.Body
+  // number: req.body.From
+  const { Body, From } = req.body;
 
+  // Check for an existing conversation
+
+  client.messages
+    .create({
+      body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
+      to: toNumber,
+      from: myNewFriendswoodNumber,
+    })
+    .then((message) => console.log(message.sid));
+
+  // This is how we respond to the text
   twiml.message("The Robots are coming! Head for the hills!");
 
   res.type("text/xml").send(twiml.toString());

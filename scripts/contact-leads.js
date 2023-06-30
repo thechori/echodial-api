@@ -1,23 +1,12 @@
-require("dotenv").config();
+const client = require("../lib/twilio/client");
+const numbers = require("../config/numbers");
 
 function sendText(toNumber) {
-  const accountSid = process.env.TWILIO_SID;
-  const authToken = process.env.TWILIO_AUTH_TOKEN;
-
-  // const myPhoneNumber = "+18326460869";
-  // const myTwilioVerified = "";
-  const myNewFriendswoodNumber = "+12812068992";
-
-  console.log("accountSid: ", accountSid);
-  console.log("authToken: ", authToken);
-
-  const client = require("twilio")(accountSid, authToken);
-
   client.messages
     .create({
       body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
       to: toNumber,
-      from: myNewFriendswoodNumber,
+      from: numbers.barker,
     })
     .then((message) => console.log(message.sid));
 }
