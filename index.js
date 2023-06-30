@@ -2,6 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const { MessagingResponse } = require("twilio").twiml;
 //
 const db = require("./db");
 const { extractErrorMessage } = require("./lib/error");
@@ -16,6 +17,16 @@ app.use(cors());
 
 app.get("/", (req, res) => {
   res.send("l34ds");
+});
+
+app.post("/sms", (req, res) => {
+  const twiml = new MessagingResponse();
+
+  console.log("req.body", req.body);
+
+  twiml.message("The Robots are coming! Head for the hills!");
+
+  res.type("text/xml").send(twiml.toString());
 });
 
 app.get("/lead", async (req, res) => {
