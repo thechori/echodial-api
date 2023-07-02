@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const client = require("../lib/twilio");
 const numbers = require("../config/numbers");
 const { addMinutes } = require("date-fns");
@@ -12,15 +14,17 @@ function sendText(toNumber) {
       body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
       to: toNumber,
       from: numbers.barker,
-      scheduleType: "fixed",
-      sendAt: scheduledTime,
-      messagingServiceSid: "MG6234abd454d8a89735a74ce3242c0c9b",
+
+      // This service seems flawed, keeps sending two... build your own for simplicity
+      // scheduleType: "fixed",
+      // sendAt: scheduledTime,
+      // messagingServiceSid: process.env.TWILIO_MESSAGING_SERVICE_SID,
     })
     .then((message) => console.log(message.sid));
 }
 
-sendText("+18326460869");
-// exports.sendText = sendText;
+// sendText("+18326460869");
+exports.sendText = sendText;
 
 // WORKS!
 // client.calls

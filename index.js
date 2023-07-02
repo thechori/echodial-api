@@ -9,6 +9,7 @@ const { extractErrorMessage } = require("./lib/error");
 const { sendText } = require("./scripts/contact-leads");
 const numbers = require("./config/numbers");
 const { addMinutes } = require("date-fns");
+const sleep = require("./lib/helpers/sleep");
 
 const app = express();
 const port = 3001;
@@ -21,7 +22,8 @@ app.get("/", (req, res) => {
   res.send("l34ds");
 });
 
-/*
+/**
+ *
   req.body: {
    ToCountry: 'US',
    ToState: 'TX',
@@ -49,16 +51,17 @@ app.post("/sms", (req, res) => {
   const twiml = new MessagingResponse();
 
   // message: req.body.Body
-  // number: req.body.From
-  const { Body, From } = req.body;
+  // lead number: req.body.From
+  // twilio number: req.body.To
+  const { Body, From, To } = req.body;
 
   // Check for an existing conversation
-  // FIND * IN LeadMessage WHERE phone = FROM ORDER BY created_at GET FIRST
+  // FIND * IN Message WHERE phone = FROM ORDER BY created_at GET FIRST
   // IF messageCount = 0 , greet them
   // IF messageCount =
 
-  // Add 1 minute to Date.now()
-  const scheduledTime = addMinutes(Date.now(), 1);
+  // Note: 15 minute MINIMUM for scheduled messages
+  const scheduledTime = addMinutes(Date.now(), 16);
 
   client.messages
     .create({
@@ -75,10 +78,10 @@ app.post("/sms", (req, res) => {
   res.type("text/xml").send(twiml.toString());
 });
 
-app.get("/lead", async (req, res) => {
+app.get("/person", async (req, res) => {
   try {
-    const leads = await db("development.lead");
-    return res.status(200).send(leads);
+    const persons = await db("development.person");
+    return res.status(200).send(persons);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
@@ -123,5 +126,25 @@ app.post("/lead", async (req, res) => {
 });
 
 app.listen(port, () => {
+  // Begin looping every minute to check for any items in `scheduled_message` table
+  dispatchScheduledMessages();
+
   console.log(`Example app listening on port ${port}`);
 });
+
+async function dispatchScheduledMessages() {
+  console.log("checking for messages to send...");
+
+  // Check `scheduled_message` table for rows
+  const messagesToSend = await db("development.scheduled_message");
+
+  if (messagesToSend.length) {
+    console.log("found some messages to send", messagesToSend);
+  }
+
+  // If found, loop through each, send text (if: Date.now() > sendAt), and then delete from the table
+
+  // 1 min delay until checking for new messages
+  await sleep(60000);
+  dispatchScheduledMessages();
+}
