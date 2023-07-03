@@ -114,7 +114,7 @@ app.post("/insure-demo", async (req, res) => {
   try {
     // Send text message
     sendText(phone);
-    return res.status(200).json(newLead);
+    return res.status(200).send("success");
   } catch (error) {
     res.status(500).json({ message: extractErrorMessage(error) });
   }
