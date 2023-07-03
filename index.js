@@ -20,26 +20,26 @@ app.get("/", (req, res) => {
   res.send("l34ds");
 });
 
-app.post("/sms", (req, res) => {
-  const twiml = new MessagingResponse();
+app.get("/authorize", (req, res) => {
+  const { authorization } = req.headers;
+  if (authorization === process.env.ADMIN_PASSWORD) {
+    return res.status(200).send("Success");
+  }
 
-  // message: req.body.Body
-  // lead number: req.body.From
-  // twilio number: req.body.To
-  const { Body, From } = req.body;
+  return res.status(401).send("Incorrect password");
+});
 
-  client.messages
-    .create({
-      body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
-      to: From,
-      from: numbers.barker,
-    })
-    .then((message) => console.log(message.sid));
+app.get("/lead", async (req, res) => {
+  const leads = await db("development.lead");
+  res.status(200).send(leads);
+});
 
-  // This is how we respond to the text
-  twiml.message("The Robots are coming! Head for the hills!");
-
-  res.type("text/xml").send(twiml.toString());
+app.get("/lead/pretty", async (req, res) => {
+  const leads = await db("development.lead")
+    .join("development.person", "person_id", "person.id")
+    .join("development.campaign", "campaign_id", "campaign.id");
+  // .select("development.lead.id", "development.lead.created_at", "ca");
+  res.status(200).send(leads);
 });
 
 app.get("/person", async (req, res) => {
