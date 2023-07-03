@@ -8,8 +8,6 @@ const db = require("./lib/db");
 const { extractErrorMessage } = require("./lib/error");
 const { sendText } = require("./scripts/contact-leads");
 const numbers = require("./config/numbers");
-const { addMinutes } = require("date-fns");
-const sleep = require("./lib/helpers/sleep");
 
 const app = express();
 const port = 3001;
@@ -22,53 +20,19 @@ app.get("/", (req, res) => {
   res.send("l34ds");
 });
 
-/**
- *
-  req.body: {
-   ToCountry: 'US',
-   ToState: 'TX',
-   SmsMessageSid: 'SM76a85162db85d1ab9e46dc77d4c45095',
-   NumMedia: '0',
-   ToCity: 'HOUSTON',
-   FromZip: '77097',
-   SmsSid: 'SM76a85162db85d1ab9e46dc77d4c45095',
-   FromState: 'TX',
-   SmsStatus: 'received',
-   FromCity: 'HOUSTON',
-   Body: 'Hi',
-   FromCountry: 'US',
-   To: '+12812068992',
-   ToZip: '77079',
-   NumSegments: '1',
-   MessageSid: 'SM76a85162db85d1ab9e46dc77d4c45095',
-   AccountSid: 'AC2c2ecb0f9459a967800a799e0abe3129',
-   From: '+18326460869',
-   ApiVersion: '2010-04-01'
- }
- */
-
 app.post("/sms", (req, res) => {
   const twiml = new MessagingResponse();
 
   // message: req.body.Body
   // lead number: req.body.From
   // twilio number: req.body.To
-  const { Body, From, To } = req.body;
-
-  // Check for an existing conversation
-  // FIND * IN Message WHERE phone = FROM ORDER BY created_at GET FIRST
-  // IF messageCount = 0 , greet them
-  // IF messageCount =
-
-  // Note: 15 minute MINIMUM for scheduled messages
-  const scheduledTime = addMinutes(Date.now(), 16);
+  const { Body, From } = req.body;
 
   client.messages
     .create({
       body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
       to: From,
       from: numbers.barker,
-      sendAt: scheduledTime,
     })
     .then((message) => console.log(message.sid));
 
@@ -87,7 +51,65 @@ app.get("/person", async (req, res) => {
   }
 });
 
-app.post("/lead", async (req, res) => {
+// Each Twilio phone number can be configured to map to a different endpoint so we can cut down on SQL queries to
+// extract this information at runtime
+
+// Mid-life crisis
+app.post("/campaign/1/lead", async (req, res) => {
+  const campaignId = 1;
+  const { Body, From } = req.body;
+
+  try {
+    const person = await db("development.person")
+      .where({
+        phone: From,
+      })
+      .first();
+    console.log("person", person);
+
+    let personId;
+
+    if (!person) {
+      // Create Person record
+      const newPerson = await db("development.person")
+        .insert({
+          phone: From,
+        })
+        .select("id");
+      console.log("newPerson", newPerson);
+      personId = newPerson.id;
+    } else {
+      console.log("found person!", person);
+      personId = person.id;
+    }
+
+    console.log("creating new lead", personId, campaignId, Body);
+
+    const newLead = await db("development.lead").insert({
+      person_id: personId,
+      campaign_id: campaignId,
+      body: Body,
+    });
+
+    console.log("newLead", newLead);
+
+    return res.status(200).send(newLead);
+  } catch (e) {
+    res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+//
+app.post("/campaign/2/lead", async (req, res) => {
+  const campaignId = 2;
+});
+
+app.post("/campaign/3/lead", async (req, res) => {
+  const campaignId = 3;
+});
+
+// Keeping this endpoint alive to demo the SMS capabilities to people
+app.post("/insure-demo", async (req, res) => {
   // submit to DB
   const {
     first_name,
@@ -116,6 +138,8 @@ app.post("/lead", async (req, res) => {
       zip,
     });
 
+    // update Person table
+
     // Send text message
     sendText(phone);
 
@@ -126,25 +150,5 @@ app.post("/lead", async (req, res) => {
 });
 
 app.listen(port, () => {
-  // Begin looping every minute to check for any items in `scheduled_message` table
-  dispatchScheduledMessages();
-
   console.log(`Example app listening on port ${port}`);
 });
-
-async function dispatchScheduledMessages() {
-  console.log("checking for messages to send...");
-
-  // Check `scheduled_message` table for rows
-  const messagesToSend = await db("development.scheduled_message");
-
-  if (messagesToSend.length) {
-    console.log("found some messages to send", messagesToSend);
-  }
-
-  // If found, loop through each, send text (if: Date.now() > sendAt), and then delete from the table
-
-  // 1 min delay until checking for new messages
-  await sleep(60000);
-  dispatchScheduledMessages();
-}
