@@ -58,6 +58,9 @@ app.post("/campaign/:campaign_id/lead", async (req, res) => {
   const { campaign_id } = req.params;
   const { Body, From } = req.body;
 
+  console.log("req.body", req.body);
+  console.log("req.params", req.params);
+
   try {
     const person = await db("development.person")
       .where({
