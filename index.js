@@ -110,39 +110,10 @@ app.post("/campaign/3/lead", async (req, res) => {
 
 // Keeping this endpoint alive to demo the SMS capabilities to people
 app.post("/insure-demo", async (req, res) => {
-  // submit to DB
-  const {
-    first_name,
-    last_name,
-    phone,
-    email,
-    birthdate,
-    address,
-    address_2,
-    city,
-    state,
-    zip,
-  } = req.body;
-
+  const { phone } = req.body;
   try {
-    const newLead = await db("development.lead").insert({
-      first_name,
-      last_name,
-      phone,
-      email,
-      birthdate,
-      address,
-      address_2,
-      city,
-      state,
-      zip,
-    });
-
-    // update Person table
-
     // Send text message
     sendText(phone);
-
     return res.status(200).json(newLead);
   } catch (error) {
     res.status(500).json({ message: extractErrorMessage(error) });
