@@ -51,12 +51,11 @@ app.get("/person", async (req, res) => {
   }
 });
 
-// Each Twilio phone number can be configured to map to a different endpoint so we can cut down on SQL queries to
-// extract this information at runtime
-
-// Mid-life crisis
-app.post("/campaign/1/lead", async (req, res) => {
-  const campaignId = 1;
+// 1 = Mid-life crisis
+// 2 = Soon-to-be parents
+// 3 = Soon-to-be homeowners
+app.post("/campaign/:campaign_id/lead", async (req, res) => {
+  const { campaign_id } = req.params;
   const { Body, From } = req.body;
 
   try {
@@ -83,11 +82,11 @@ app.post("/campaign/1/lead", async (req, res) => {
       personId = person.id;
     }
 
-    console.log("creating new lead", personId, campaignId, Body);
+    console.log("creating new lead", personId, Body);
 
     const newLead = await db("development.lead").insert({
       person_id: personId,
-      campaign_id: campaignId,
+      campaign_id,
       body: Body,
     });
 
@@ -97,15 +96,6 @@ app.post("/campaign/1/lead", async (req, res) => {
   } catch (e) {
     res.status(500).send(extractErrorMessage(e));
   }
-});
-
-//
-app.post("/campaign/2/lead", async (req, res) => {
-  const campaignId = 2;
-});
-
-app.post("/campaign/3/lead", async (req, res) => {
-  const campaignId = 3;
 });
 
 // Keeping this endpoint alive to demo the SMS capabilities to people
