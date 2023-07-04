@@ -57,6 +57,64 @@ app.get("/person", async (req, res) => {
   }
 });
 
+app.get("/campaign", async (req, res) => {
+  try {
+    const campaigns = await db("development.campaign");
+    return res.status(200).send(campaigns);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+app.get("/campaign/pretty", async (req, res) => {
+  try {
+    const campaigns = await db("development.campaign as c")
+      .join(
+        "development.twilio_phone_number as tpn",
+        "twilio_phone_number_id",
+        "tpn.id"
+      )
+      .select(
+        "c.id as id",
+        "c.name",
+        "c.description",
+        "c.notes",
+        "tpn.number",
+        "tpn.friendly_name"
+      );
+
+    return res.status(200).send(campaigns);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+app.get("/listing", async (req, res) => {
+  try {
+    const listings = await db("development.listing");
+    return res.status(200).send(listings);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+app.get("/listing/pretty", async (req, res) => {
+  try {
+    const listings = await db("development.listing as l")
+      .join("development.campaign as c", "campaign_id", "c.id")
+      .select(
+        "l.id as id",
+        "l.name",
+        "l.description",
+        "l.url",
+        "c.name as campaign_name"
+      );
+    return res.status(200).send(listings);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
 // 1 = Mid-life crisis
 // 2 = Soon-to-be parents
 // 3 = Soon-to-be homeowners
