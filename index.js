@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
-const { MessagingResponse } = require("twilio").twiml;
+const VoiceResponse = require("twilio").twiml.VoiceResponse;
 //
 const db = require("./lib/db");
 const { extractErrorMessage } = require("./lib/error");
@@ -117,21 +117,8 @@ app.get("/listing/pretty", async (req, res) => {
 
 // https://api.insure.teodorosystems.com/campaign/1/leads/voice
 app.post("/campaign/:campaign_id/lead/voice", async (req, res) => {
-  // const { campaign_id } = req.params;
-  // const { Body, From } = req.body;
-
-  console.log("req.body", req.body);
-  console.log("req.params", req.params);
-
-  return res.status(200).send("ok");
-});
-
-// 1 = Mid-life crisis
-// 2 = Soon-to-be parents
-// 3 = Soon-to-be homeowners
-app.post("/campaign/:campaign_id/lead", async (req, res) => {
   const { campaign_id } = req.params;
-  const { Body, From } = req.body;
+  const { From, FromCity, FromState, FromZip } = req.body;
 
   console.log("req.body", req.body);
   console.log("req.params", req.params);
@@ -142,7 +129,6 @@ app.post("/campaign/:campaign_id/lead", async (req, res) => {
         phone: From,
       })
       .first();
-    console.log("person", person);
 
     let personId;
 
@@ -151,24 +137,75 @@ app.post("/campaign/:campaign_id/lead", async (req, res) => {
       const newPerson = await db("development.person")
         .insert({
           phone: From,
+          city: FromCity,
+          state: FromState,
+          zip: FromZip,
         })
-        .select("id");
-      console.log("newPerson", newPerson);
-      personId = newPerson.id;
+        .returning("id")
+        .into("development.person");
+      personId = newPerson[0].id;
     } else {
-      console.log("found person!", person);
       personId = person.id;
     }
 
-    console.log("creating new lead", personId, Body);
+    await db("development.lead").insert({
+      person_id: personId,
+      campaign_id,
+      body: null,
+    });
+
+    const response = new VoiceResponse();
+    response.hangup();
+
+    return res.status(200).send(response.toString());
+  } catch (e) {
+    const response = new VoiceResponse();
+    response.hangup();
+
+    res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+// 1 = Mid-life crisis
+// 2 = Soon-to-be parents
+// 3 = Soon-to-be homeowners
+app.post("/campaign/:campaign_id/lead", async (req, res) => {
+  const { campaign_id } = req.params;
+  const { Body, From, FromCity, FromState, FromZip } = req.body;
+
+  console.log("req.body", req.body);
+  console.log("req.params", req.params);
+
+  try {
+    const person = await db("development.person")
+      .where({
+        phone: From,
+      })
+      .first();
+
+    let personId;
+
+    if (!person) {
+      // Create Person record
+      const newPerson = await db("development.person")
+        .insert({
+          phone: From,
+          city: FromCity,
+          state: FromState,
+          zip: FromZip,
+        })
+        .returning("id")
+        .into("development.person");
+      personId = newPerson[0].id;
+    } else {
+      personId = person.id;
+    }
 
     const newLead = await db("development.lead").insert({
       person_id: personId,
       campaign_id,
       body: Body,
     });
-
-    console.log("newLead", newLead);
 
     return res.status(200).send(newLead);
   } catch (e) {
