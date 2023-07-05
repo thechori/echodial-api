@@ -115,6 +115,17 @@ app.get("/listing/pretty", async (req, res) => {
   }
 });
 
+// https://api.insure.teodorosystems.com/campaign/1/leads/voice
+app.post("/campaign/:campaign_id/lead/voice", async (req, res) => {
+  // const { campaign_id } = req.params;
+  // const { Body, From } = req.body;
+
+  console.log("req.body", req.body);
+  console.log("req.params", req.params);
+
+  return res.status(200).send("ok");
+});
+
 // 1 = Mid-life crisis
 // 2 = Soon-to-be parents
 // 3 = Soon-to-be homeowners
