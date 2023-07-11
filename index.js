@@ -217,7 +217,7 @@ app.post("/insurednow.app", async (req, res) => {
   // ID 5 = All (insurednow.app website)
   const campaign_id = 5;
 
-  const { firstName, lastName, phone, dob } = req.body;
+  const { phone, email, firstName, lastName, dob, favoriteColor } = req.body;
 
   try {
     const person = await db("development.person")
@@ -233,9 +233,11 @@ app.post("/insurednow.app", async (req, res) => {
       const newPerson = await db("development.person")
         .insert({
           phone,
+          email,
           first_name: firstName,
           last_name: lastName,
           date_of_birth: dob,
+          favorite_color: favoriteColor,
         })
         .returning("id")
         .into("development.person");
