@@ -6,7 +6,7 @@ const VoiceResponse = require("twilio").twiml.VoiceResponse;
 //
 const db = require("./lib/db");
 const { extractErrorMessage } = require("./lib/error");
-const { sendText } = require("./scripts/contact-leads");
+const client = require("./lib/twilio");
 const numbers = require("./config/numbers");
 
 const app = express();
@@ -115,7 +115,6 @@ app.get("/listing/pretty", async (req, res) => {
   }
 });
 
-// https://api.insure.teodorosystems.com/campaign/1/leads/voice
 app.post("/campaign/:campaign_id/lead/voice", async (req, res) => {
   const { campaign_id } = req.params;
   const { From, FromCity, FromState, FromZip } = req.body;
@@ -213,18 +212,59 @@ app.post("/campaign/:campaign_id/lead", async (req, res) => {
   }
 });
 
-// Keeping this endpoint alive to demo the SMS capabilities to people
-app.post("/insure-demo", async (req, res) => {
-  const { phone } = req.body;
+// HOT LEADS
+app.post("/insurednow.app", async (req, res) => {
+  // ID 5 = All (insurednow.app website)
+  const campaign_id = 5;
+
+  const { firstName, lastName, phone, dob } = req.body;
+
   try {
+    const person = await db("development.person")
+      .where({
+        phone,
+      })
+      .first();
+
+    let personId;
+
+    if (!person) {
+      // Create Person record
+      const newPerson = await db("development.person")
+        .insert({
+          phone,
+          first_name: firstName,
+          last_name: lastName,
+          date_of_birth: dob,
+        })
+        .returning("id")
+        .into("development.person");
+      personId = newPerson[0].id;
+    } else {
+      personId = person.id;
+    }
+
+    const newLead = await db("development.lead").insert({
+      person_id: personId,
+      campaign_id,
+      body: "(insurednow.app submission)",
+    });
+
     // Send text message
-    sendText(phone);
-    return res.status(200).send("success");
-  } catch (error) {
-    res.status(500).json({ message: extractErrorMessage(error) });
+    client.messages
+      .create({
+        body: "Hello! This is Ryan with Insured Now. Thank you so much for inquiring about our modern insurance options. One of our specialists will be in touch with you shortly. Have a great day! 😊",
+        to: phone,
+        from: numbers.barker,
+      })
+      .then((message) => console.log(message.sid));
+
+    return res.status(200).send(newLead);
+  } catch (e) {
+    res.status(500).send(extractErrorMessage(e));
   }
 });
 
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`);
+  console.log(`L34ds on port ${port}`);
 });
