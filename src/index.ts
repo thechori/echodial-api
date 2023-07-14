@@ -1,7 +1,6 @@
-import { Request, Response } from "express";
-
 require("dotenv").config();
-import express from "express";
+
+import express, { Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 //
@@ -33,5 +32,6 @@ app.use("/person", personRouter);
 app.use("/user", userRouter);
 
 app.listen(port, () => {
+  console.log("Environment: ", process.env.NODE_ENV);
   console.log(`L34ds on port ${port}`);
 });
