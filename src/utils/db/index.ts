@@ -17,4 +17,4 @@ const pg = knex({
   },
 });
 
-module.exports = pg;
+export default pg;

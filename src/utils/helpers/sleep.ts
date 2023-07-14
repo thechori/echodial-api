@@ -5,8 +5,8 @@
  * @param {Number} millis - how long to sleep in milliseconds
  * @return {Promise<void>}
  */
-async function sleep(millis) {
+async function sleep(millis: number) {
   return new Promise((resolve) => setTimeout(resolve, millis));
 }
 
-module.exports = sleep;
+export default sleep;

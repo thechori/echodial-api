@@ -1,17 +1,17 @@
-const client = require("../lib/twilio");
-const numbers = require("../config/numbers");
+import client from "../lib/twilio";
+import numbers from "../config/numbers";
 
-function sendText(toNumber) {
+function sendText(toNumber: string) {
   client.messages
     .create({
       body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
       to: toNumber,
       from: numbers.barker,
     })
-    .then((message) => console.log(message.sid));
+    .then((message: any) => console.log(message.sid));
 }
 
-exports.sendText = sendText;
+export default sendText;
 
 // WORKS!
 // client.calls
