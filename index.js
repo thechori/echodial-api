@@ -30,27 +30,27 @@ app.get("/authorize", (req, res) => {
 });
 
 app.get("/lead", async (req, res) => {
-  const leads = await db("development.lead");
+  const leads = await db("lead");
   res.status(200).send(leads);
 });
 
 app.get("/lead/pretty", async (req, res) => {
-  const leads = await db("development.lead")
-    .join("development.person", "person_id", "person.id")
-    .join("development.campaign", "campaign_id", "campaign.id")
+  const leads = await db("lead")
+    .join("person", "person_id", "person.id")
+    .join("campaign", "campaign_id", "campaign.id")
     .select(
-      "development.lead.id",
-      "development.lead.created_at",
-      "development.lead.body as message",
-      "development.person.phone as person_phone",
-      "development.campaign.name as campaign_name"
+      "lead.id",
+      "lead.created_at",
+      "lead.body as message",
+      "person.phone as person_phone",
+      "campaign.name as campaign_name"
     );
   res.status(200).send(leads);
 });
 
 app.get("/person", async (req, res) => {
   try {
-    const persons = await db("development.person");
+    const persons = await db("person");
     return res.status(200).send(persons);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
@@ -59,7 +59,7 @@ app.get("/person", async (req, res) => {
 
 app.get("/campaign", async (req, res) => {
   try {
-    const campaigns = await db("development.campaign");
+    const campaigns = await db("campaign");
     return res.status(200).send(campaigns);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
@@ -68,12 +68,8 @@ app.get("/campaign", async (req, res) => {
 
 app.get("/campaign/pretty", async (req, res) => {
   try {
-    const campaigns = await db("development.campaign as c")
-      .join(
-        "development.twilio_phone_number as tpn",
-        "twilio_phone_number_id",
-        "tpn.id"
-      )
+    const campaigns = await db("campaign as c")
+      .join("twilio_phone_number as tpn", "twilio_phone_number_id", "tpn.id")
       .select(
         "c.id as id",
         "c.name",
@@ -91,7 +87,7 @@ app.get("/campaign/pretty", async (req, res) => {
 
 app.get("/listing", async (req, res) => {
   try {
-    const listings = await db("development.listing");
+    const listings = await db("listing");
     return res.status(200).send(listings);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
@@ -100,8 +96,8 @@ app.get("/listing", async (req, res) => {
 
 app.get("/listing/pretty", async (req, res) => {
   try {
-    const listings = await db("development.listing as l")
-      .join("development.campaign as c", "campaign_id", "c.id")
+    const listings = await db("listing as l")
+      .join("campaign as c", "campaign_id", "c.id")
       .select(
         "l.id as id",
         "l.name",
@@ -123,7 +119,7 @@ app.post("/campaign/:campaign_id/lead/voice", async (req, res) => {
   console.log("req.params", req.params);
 
   try {
-    const person = await db("development.person")
+    const person = await db("person")
       .where({
         phone: From,
       })
@@ -133,7 +129,7 @@ app.post("/campaign/:campaign_id/lead/voice", async (req, res) => {
 
     if (!person) {
       // Create Person record
-      const newPerson = await db("development.person")
+      const newPerson = await db("person")
         .insert({
           phone: From,
           city: FromCity,
@@ -141,13 +137,13 @@ app.post("/campaign/:campaign_id/lead/voice", async (req, res) => {
           zip: FromZip,
         })
         .returning("id")
-        .into("development.person");
+        .into("person");
       personId = newPerson[0].id;
     } else {
       personId = person.id;
     }
 
-    await db("development.lead").insert({
+    await db("lead").insert({
       person_id: personId,
       campaign_id,
       body: null,
@@ -176,7 +172,7 @@ app.post("/campaign/:campaign_id/lead", async (req, res) => {
   console.log("req.params", req.params);
 
   try {
-    const person = await db("development.person")
+    const person = await db("person")
       .where({
         phone: From,
       })
@@ -186,7 +182,7 @@ app.post("/campaign/:campaign_id/lead", async (req, res) => {
 
     if (!person) {
       // Create Person record
-      const newPerson = await db("development.person")
+      const newPerson = await db("person")
         .insert({
           phone: From,
           city: FromCity,
@@ -194,13 +190,13 @@ app.post("/campaign/:campaign_id/lead", async (req, res) => {
           zip: FromZip,
         })
         .returning("id")
-        .into("development.person");
+        .into("person");
       personId = newPerson[0].id;
     } else {
       personId = person.id;
     }
 
-    const newLead = await db("development.lead").insert({
+    const newLead = await db("lead").insert({
       person_id: personId,
       campaign_id,
       body: Body,
@@ -220,7 +216,7 @@ app.post("/insurednow.app", async (req, res) => {
   const { phone, email, firstName, lastName, dob, favoriteColor } = req.body;
 
   try {
-    const person = await db("development.person")
+    const person = await db("person")
       .where({
         phone,
       })
@@ -230,7 +226,7 @@ app.post("/insurednow.app", async (req, res) => {
 
     if (!person) {
       // Create Person record
-      const newPerson = await db("development.person")
+      const newPerson = await db("person")
         .insert({
           phone,
           email,
@@ -240,13 +236,13 @@ app.post("/insurednow.app", async (req, res) => {
           favorite_color: favoriteColor,
         })
         .returning("id")
-        .into("development.person");
+        .into("person");
       personId = newPerson[0].id;
     } else {
       personId = person.id;
     }
 
-    const newLead = await db("development.lead").insert({
+    const newLead = await db("lead").insert({
       person_id: personId,
       campaign_id,
       body: "(insurednow.app submission)",
