@@ -7,7 +7,7 @@ const router = Router();
 
 router.get("/listing", async (req: Request, res: Response) => {
   try {
-    const listings = await db("development.listing");
+    const listings = await db("listing");
     return res.status(200).send(listings);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
@@ -16,8 +16,8 @@ router.get("/listing", async (req: Request, res: Response) => {
 
 router.get("/listing/pretty", async (req: Request, res: Response) => {
   try {
-    const listings = await db("development.listing as l")
-      .join("development.campaign as c", "campaign_id", "c.id")
+    const listings = await db("listing as l")
+      .join("campaign as c", "campaign_id", "c.id")
       .select(
         "l.id as id",
         "l.name",

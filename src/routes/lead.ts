@@ -5,20 +5,20 @@ import db from "../utils/db";
 const router = Router();
 
 router.get("/lead", async (req: Request, res: Response) => {
-  const leads = await db("development.lead");
+  const leads = await db("lead");
   res.status(200).send(leads);
 });
 
 router.get("/lead/pretty", async (req: Request, res: Response) => {
-  const leads = await db("development.lead")
-    .join("development.person", "person_id", "person.id")
-    .join("development.campaign", "campaign_id", "campaign.id")
+  const leads = await db("lead")
+    .join("person", "person_id", "person.id")
+    .join("campaign", "campaign_id", "campaign.id")
     .select(
-      "development.lead.id",
-      "development.lead.created_at",
-      "development.lead.body as message",
-      "development.person.phone as person_phone",
-      "development.campaign.name as campaign_name"
+      "lead.id",
+      "lead.created_at",
+      "lead.body as message",
+      "person.phone as person_phone",
+      "campaign.name as campaign_name"
     );
   res.status(200).send(leads);
 });

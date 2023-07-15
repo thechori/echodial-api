@@ -8,7 +8,7 @@ const router = Router();
 
 router.get("/campaign", async (req: Request, res: Response) => {
   try {
-    const campaigns = await db("development.campaign");
+    const campaigns = await db("campaign");
     return res.status(200).send(campaigns);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
@@ -17,12 +17,8 @@ router.get("/campaign", async (req: Request, res: Response) => {
 
 router.get("/campaign/pretty", async (req: Request, res: Response) => {
   try {
-    const campaigns = await db("development.campaign as c")
-      .join(
-        "development.twilio_phone_number as tpn",
-        "twilio_phone_number_id",
-        "tpn.id"
-      )
+    const campaigns = await db("campaign as c")
+      .join("twilio_phone_number as tpn", "twilio_phone_number_id", "tpn.id")
       .select(
         "c.id as id",
         "c.name",
@@ -48,7 +44,7 @@ router.post(
     console.log("req.params", req.params);
 
     try {
-      const person = await db("development.person")
+      const person = await db("person")
         .where({
           phone: From,
         })
@@ -58,7 +54,7 @@ router.post(
 
       if (!person) {
         // Create Person record
-        const newPerson = await db("development.person")
+        const newPerson = await db("person")
           .insert({
             phone: From,
             city: FromCity,
@@ -66,13 +62,13 @@ router.post(
             zip: FromZip,
           })
           .returning("id")
-          .into("development.person");
+          .into("person");
         personId = newPerson[0].id;
       } else {
         personId = person.id;
       }
 
-      await db("development.lead").insert({
+      await db("lead").insert({
         person_id: personId,
         campaign_id,
         body: null,
@@ -104,7 +100,7 @@ router.post(
     console.log("req.params", req.params);
 
     try {
-      const person = await db("development.person")
+      const person = await db("person")
         .where({
           phone: From,
         })
@@ -114,7 +110,7 @@ router.post(
 
       if (!person) {
         // Create Person record
-        const newPerson = await db("development.person")
+        const newPerson = await db("person")
           .insert({
             phone: From,
             city: FromCity,
@@ -122,13 +118,13 @@ router.post(
             zip: FromZip,
           })
           .returning("id")
-          .into("development.person");
+          .into("person");
         personId = newPerson[0].id;
       } else {
         personId = person.id;
       }
 
-      const newLead = await db("development.lead").insert({
+      const newLead = await db("lead").insert({
         person_id: personId,
         campaign_id,
         body: Body,

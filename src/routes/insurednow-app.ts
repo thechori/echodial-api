@@ -15,7 +15,7 @@ router.post("/insurednow.app", async (req: Request, res: Response) => {
   const { phone, email, firstName, lastName, dob, favoriteColor } = req.body;
 
   try {
-    const person = await db("development.person")
+    const person = await db("person")
       .where({
         phone,
       })
@@ -25,7 +25,7 @@ router.post("/insurednow.app", async (req: Request, res: Response) => {
 
     if (!person) {
       // Create Person record
-      const newPerson = await db("development.person")
+      const newPerson = await db("person")
         .insert({
           phone,
           email,
@@ -35,13 +35,13 @@ router.post("/insurednow.app", async (req: Request, res: Response) => {
           favorite_color: favoriteColor,
         })
         .returning("id")
-        .into("development.person");
+        .into("person");
       personId = newPerson[0].id;
     } else {
       personId = person.id;
     }
 
-    const newLead = await db("development.lead").insert({
+    const newLead = await db("lead").insert({
       person_id: personId,
       campaign_id,
       body: "(insurednow.app submission)",
