@@ -215,6 +215,10 @@ app.post("/insurednow.app", async (req, res) => {
 
   const { phone, email, firstName, lastName, dob, favoriteColor } = req.body;
 
+  if (!phone) {
+    return res.status(400).send("Missing `phone` field");
+  }
+
   try {
     const person = await db("person")
       .where({
@@ -242,7 +246,7 @@ app.post("/insurednow.app", async (req, res) => {
       personId = person.id;
     }
 
-    const newLead = await db("lead").insert({
+    await db("lead").insert({
       person_id: personId,
       campaign_id,
       body: "(insurednow.app submission)",
@@ -257,7 +261,7 @@ app.post("/insurednow.app", async (req, res) => {
       })
       .then((message) => console.log(message.sid));
 
-    return res.status(200).send(newLead);
+    return res.status(200).send("Successfully created new Lead");
   } catch (e) {
     res.status(500).send(extractErrorMessage(e));
   }
