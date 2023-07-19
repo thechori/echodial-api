@@ -24,6 +24,12 @@ router.post("/sign-in", async (req, res) => {
   // Grab body vars
   const { email, password } = req.body;
 
+  if (!email || !password) {
+    return res
+      .status(400)
+      .json({ message: "Please provide an email and password" });
+  }
+
   // Look up email in DB
   const user = await db("user").where("email", email).first();
 
