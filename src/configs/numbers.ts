@@ -6,4 +6,4 @@ const numbers = {
   friendswood: "+12813178765",
 };
 
-module.exports = numbers;
+export default numbers;
