@@ -8,7 +8,7 @@ import numbers from "../configs/numbers";
 const router = Router();
 
 // HOT LEADS
-router.post("/insurednow.app", async (req: Request, res: Response) => {
+router.post("/", async (req: Request, res: Response) => {
   // ID 5 = All (insurednow.app website)
   const campaign_id = 5;
 

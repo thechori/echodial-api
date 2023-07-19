@@ -5,7 +5,7 @@ import db from "../utils/db";
 
 const router = Router();
 
-router.get("/listing", async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   try {
     const listings = await db("listing");
     return res.status(200).send(listings);
@@ -14,7 +14,7 @@ router.get("/listing", async (req: Request, res: Response) => {
   }
 });
 
-router.get("/listing/pretty", async (req: Request, res: Response) => {
+router.get("/pretty", async (req: Request, res: Response) => {
   try {
     const listings = await db("listing as l")
       .join("campaign as c", "campaign_id", "c.id")

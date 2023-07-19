@@ -12,10 +12,34 @@ import { extractErrorMessage } from "../utils/error";
 
 const router = express.Router();
 
+// Get self information
+router.get("/me", async (req, res) => {
+  const { authorization } = req.headers;
+
+  // Check for auth header
+  if (!authorization) {
+    return res.status(403).send("Missing credentials");
+  }
+
+  // Extract JWT and grab user ID from it
+
+  try {
+  } catch (error) {}
+});
+
 // Read all users
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const users = await db("user");
+    res.json(users);
+  } catch (error) {
+    res.status(500).json({ message: extractErrorMessage(error) });
+  }
+});
+
+router.get("/:id", authMiddleware, async (req, res) => {
+  try {
+    const users = await db("user").where;
     res.json(users);
   } catch (error) {
     res.status(500).json({ message: extractErrorMessage(error) });

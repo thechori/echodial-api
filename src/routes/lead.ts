@@ -4,12 +4,12 @@ import db from "../utils/db";
 
 const router = Router();
 
-router.get("/lead", async (req: Request, res: Response) => {
+router.get("/", async (req: Request, res: Response) => {
   const leads = await db("lead");
   res.status(200).send(leads);
 });
 
-router.get("/lead/pretty", async (req: Request, res: Response) => {
+router.get("/pretty", async (req: Request, res: Response) => {
   const leads = await db("lead")
     .join("person", "person_id", "person.id")
     .join("campaign", "campaign_id", "campaign.id")
