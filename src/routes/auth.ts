@@ -19,8 +19,8 @@ router.get("/authorize", (req: Request, res: Response) => {
   return res.status(401).send("Incorrect password");
 });
 
-// Login
-router.post("/login", async (req, res) => {
+// Sign in
+router.post("/sign-in", async (req, res) => {
   // Grab body vars
   const { email, password } = req.body;
 
