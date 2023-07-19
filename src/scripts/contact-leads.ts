@@ -1,5 +1,5 @@
-import client from "../lib/twilio";
-import numbers from "../config/numbers";
+import client from "../utils/twilio";
+import numbers from "../configs/numbers";
 
 function sendText(toNumber: string) {
   client.messages
