@@ -52,11 +52,11 @@ router.post("/", async (req: any, res) => {
 
   /* Validate data before inserting into the database */
 
-  if (!firstName || !lastName || !phone || !email || !password) {
+  if (!firstName || !lastName || !email || !password) {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  if (!isValidPhoneNumber(phone)) {
+  if (phone && !isValidPhoneNumber(phone)) {
     return res.status(400).json({ message: "Invalid phone number" });
   }
 
