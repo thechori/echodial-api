@@ -3,7 +3,7 @@ import { isValidPhoneNumber } from "./phone";
 // Unit tests for isValidPhoneNumber function
 describe("isValidPhoneNumber", () => {
   it("should return true for a valid phone number", () => {
-    const phoneNumber = "1234567890";
+    const phoneNumber = "+18326460869";
     const isValid = isValidPhoneNumber(phoneNumber);
     expect(isValid).toBe(true);
   });
