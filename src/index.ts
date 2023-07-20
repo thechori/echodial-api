@@ -11,6 +11,7 @@ import leadRouter from "./routes/lead";
 import listingRouter from "./routes/listing";
 import personRouter from "./routes/person";
 import userRouter from "./routes/user";
+import dialerRouter from "./routes/dialer";
 
 const app = express();
 const port = 3001;
@@ -30,6 +31,7 @@ app.use("/lead", leadRouter);
 app.use("/listing", listingRouter);
 app.use("/person", personRouter);
 app.use("/user", userRouter);
+app.use("/dialer", dialerRouter);
 
 app.listen(port, () => {
   console.log("Environment: ", process.env.NODE_ENV);
