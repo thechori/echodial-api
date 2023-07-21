@@ -30,8 +30,11 @@ router.post("/sign-in", async (req, res) => {
       .json({ message: "Please provide an email and password" });
   }
 
+  // Cleanse email input (lowercase/trim)
+  const emailClean = email.trim().toLowerCase();
+
   // Look up email in DB
-  const user = await db("user").where("email", email).first();
+  const user = await db("user").where("email", emailClean).first();
 
   if (!user) {
     return res.status(400).json({ message: "Email not found" });

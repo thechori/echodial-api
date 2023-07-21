@@ -14,7 +14,6 @@ import userRouter from "./routes/user";
 import dialerRouter from "./routes/dialer";
 
 const app = express();
-const port = 3001;
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -33,7 +32,7 @@ app.use("/person", personRouter);
 app.use("/user", userRouter);
 app.use("/dialer", dialerRouter);
 
-app.listen(port, () => {
+app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);
-  console.log(`L34ds on port ${port}`);
+  console.log(`L34ds on port ${process.env.PORT}`);
 });
