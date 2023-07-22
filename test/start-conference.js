@@ -28,7 +28,7 @@ console.log("starting conference call...");
 client
   .conferences("ryansfirsttestconference1")
   .participants.create({
-    label: "customer",
+    label: "ryan",
     earlyMedia: true,
     beep: "onEnter",
     statusCallback: "https://myapp.com/events",
@@ -36,5 +36,19 @@ client
     record: true,
     from: "+12812068992",
     to: "+18326460869",
+  })
+  .then((participant) => console.log(participant.callSid));
+
+client
+  .conferences("ryansfirsttestconference1")
+  .participants.create({
+    label: "teodoro systems",
+    earlyMedia: true,
+    beep: "onEnter",
+    statusCallback: "https://myapp.com/events",
+    statusCallbackEvent: ["ringing"],
+    record: true,
+    from: "+12812068992",
+    to: "+18328638635",
   })
   .then((participant) => console.log(participant.callSid));
