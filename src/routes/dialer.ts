@@ -2,7 +2,7 @@ import { Router } from "express";
 import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 import AccessToken, { VoiceGrant } from "twilio/lib/jwt/AccessToken";
 //
-import { isValidPhoneNumber } from "../utils/validators/phone";
+// import { isValidPhoneNumber } from "../utils/validators/phone";
 import nameGenerator from "../utils/helpers/name-generator";
 import twilioConfig from "../configs/twilio";
 
