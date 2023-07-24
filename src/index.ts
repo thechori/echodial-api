@@ -12,6 +12,8 @@ import listingRouter from "./routes/listing";
 import personRouter from "./routes/person";
 import userRouter from "./routes/user";
 import dialerRouter from "./routes/dialer";
+import conferenceRouter from "./routes/conference";
+import { authMiddleware } from "./middlewares/auth";
 
 const app = express();
 
@@ -30,7 +32,8 @@ app.use("/lead", leadRouter);
 app.use("/listing", listingRouter);
 app.use("/person", personRouter);
 app.use("/user", userRouter);
-app.use("/dialer", dialerRouter);
+app.use("/dialer", authMiddleware, dialerRouter);
+app.use("/conference", authMiddleware, conferenceRouter);
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);

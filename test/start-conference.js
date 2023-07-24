@@ -25,22 +25,23 @@ console.log("starting conference call...");
 //   })
 //   .then((call) => console.log(call.sid));
 
-client
-  .conferences("ryansfirsttestconference1")
-  .participants.create({
-    label: "ryan",
-    earlyMedia: true,
-    beep: "onEnter",
-    statusCallback: "https://myapp.com/events",
-    statusCallbackEvent: ["ringing"],
-    record: true,
-    from: "+12812068992",
-    to: "+18326460869",
-  })
-  .then((participant) => console.log(participant.callSid));
+// client
+//   .conferences("thechori@gmail.com")
+//   .participants.create({
+//     label: "ryan",
+//     earlyMedia: true,
+//     beep: "onEnter",
+//     statusCallback: "https://myapp.com/events",
+//     statusCallbackEvent: ["ringing"],
+//     record: true,
+//     from: "+12812068992",
+//     to: "+18326460869",
+//     startConferenceOnEnter: true,
+//   })
+//   .then((participant) => console.log(participant.callSid));
 
 client
-  .conferences("ryansfirsttestconference1")
+  .conferences("thechori@gmail.com")
   .participants.create({
     label: "teodoro systems",
     earlyMedia: true,
@@ -50,5 +51,8 @@ client
     record: true,
     from: "+12812068992",
     to: "+18328638635",
+    startConferenceOnEnter: false,
+    waitUrl: "https://api.twilio.com/cowbell.mp3",
+    waitMethod: "GET",
   })
   .then((participant) => console.log(participant.callSid));

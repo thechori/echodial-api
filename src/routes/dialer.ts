@@ -5,6 +5,9 @@ import AccessToken, { VoiceGrant } from "twilio/lib/jwt/AccessToken";
 // import { isValidPhoneNumber } from "../utils/validators/phone";
 import nameGenerator from "../utils/helpers/name-generator";
 import twilioConfig from "../configs/twilio";
+import twilioClient from "../services/twilio";
+
+let activeCallSids: string[] = [];
 
 const router = Router();
 
@@ -55,7 +58,7 @@ function voiceResponse(requestBody: any) {
     callerId: requestBody.From,
   });
 
-  dial.number(requestBody.To);
+  dial.number(toNumberOrClientName);
 
   // Check if the 'To' parameter is a Phone Number or Client Name
   // in order to use the appropriate TwiML noun
@@ -67,6 +70,63 @@ function voiceResponse(requestBody: any) {
 
   return twiml.toString();
 }
+
+router.post("/call", (req, res) => {
+  const { From, To } = req.body;
+
+  twilioClient.calls
+    .create({
+      twiml: `
+      <Response>
+        <Say>Hey! It's Victor. Can you hear me okay?</Say>
+        <Pause length="30" />
+      </Response>
+    `,
+      from: From,
+      to: To,
+    })
+    .then((call) => console.log(call.sid));
+});
+
+// Take an
+router.post("/transfer", (req, res) => {
+  const { call_sid } = req.body;
+
+  twilioClient
+    .calls(call_sid)
+    .update({ method: "POST", url: "http://demo.twilio.com/docs/voice.xml" })
+    .then((call) => console.log(call.to));
+});
+
+// Works
+router.get("/active-calls", async (req, res) => {
+  const calls = await twilioClient.calls.list({ status: "in-progress" });
+  return res.status(200).send(calls);
+});
+
+router.get("/active-call-sids", (req, res) => {
+  return res.status(200).send(activeCallSids);
+});
+router.post("/active-call-sids", (req, res) => {
+  const { call_sid } = req.body;
+  if (!call_sid) {
+    return res.status(400).send("missing call_sid");
+  }
+  activeCallSids.push(call_sid);
+  return res.status(200).send(activeCallSids);
+});
+router.delete("/active-call-sids/:call_sid", (req, res) => {
+  const { call_sid } = req.params;
+  if (!call_sid) {
+    return res.status(400).send("missing call_sid");
+  }
+  let indexFound = activeCallSids.indexOf(call_sid);
+  if (indexFound === -1) {
+    return res.status(400).send("call_sid not found");
+  }
+  activeCallSids.splice(indexFound, 1);
+  return res.status(200).send(activeCallSids);
+});
 
 // This endpoint should support the ability to:
 // - Handle many different users with different From and To numbers

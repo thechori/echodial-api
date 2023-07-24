@@ -4,6 +4,7 @@ import numbers from "./numbers";
 
 const twilioConfig = {
   accountSid: "",
+  authToken: "",
   twimlAppSid: "",
   callerId: "",
   apiKey: "",
@@ -16,6 +17,7 @@ const {
   TWILIO_TWIML_APP_SID,
   TWILIO_API_KEY,
   TWILIO_API_SECRET,
+  TWILIO_AUTH_TOKEN,
 } = process.env;
 
 if (
@@ -23,7 +25,8 @@ if (
   !TWILIO_SID ||
   !TWILIO_TWIML_APP_SID ||
   !TWILIO_API_KEY ||
-  !TWILIO_API_SECRET
+  !TWILIO_API_SECRET ||
+  !TWILIO_AUTH_TOKEN
 ) {
   throw "missing field from .env file";
 }
@@ -35,6 +38,7 @@ if (
 // variables, and load them from there as we are doing below. Alternately,
 // you could hard code these values here as strings.
 twilioConfig.accountSid = TWILIO_SID;
+twilioConfig.authToken = TWILIO_AUTH_TOKEN;
 
 twilioConfig.twimlAppSid = TWILIO_TWIML_APP_SID;
 twilioConfig.callerId = numbers.barker; // FROM number
