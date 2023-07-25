@@ -17,13 +17,30 @@ router.get("/", async (req: Request, res: Response) => {
 
 // Create new Conference to dial Lead
 router.post("/", (req, res) => {
-  const { from, to, session_id } = req.body;
+  const { from, to, to_label, sid } = req.body;
+
+  twilioClient
+    .conferences(sid)
+    .participants.create({
+      label: to_label,
+      earlyMedia: true,
+      beep: "onEnter",
+      statusCallback: "https://myapp.com/events",
+      statusCallbackEvent: ["ringing"],
+      record: true,
+      from: from,
+      to: to,
+      startConferenceOnEnter: false,
+      waitUrl: "https://api.twilio.com/cowbell.mp3",
+      waitMethod: "GET",
+    })
+    .then((participant) => console.log(participant.callSid));
 });
 
-router.get("/active-conference-sids", (req, res) => {
+router.get("/active-sids", (req, res) => {
   return res.status(200).send(activeConferenceSids);
 });
-router.post("/active-conference-sids", (req, res) => {
+router.post("/active-sids", (req, res) => {
   const { conference_sid } = req.body;
   if (!conference_sid) {
     return res.status(400).send("missing conference_sid");
@@ -31,7 +48,7 @@ router.post("/active-conference-sids", (req, res) => {
   activeConferenceSids.push(conference_sid);
   return res.status(200).send(activeConferenceSids);
 });
-router.delete("/active-conference-sids/:conference_sid", (req, res) => {
+router.delete("/active-sids/:conference_sid", (req, res) => {
   const { conference_sid } = req.params;
   if (!conference_sid) {
     return res.status(400).send("missing conference_sid");

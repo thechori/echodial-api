@@ -78,8 +78,8 @@ router.post("/call", (req, res) => {
     .create({
       twiml: `
       <Response>
-        <Say>Hey! It's Victor. Can you hear me okay?</Say>
-        <Pause length="30" />
+        <Say>Welcome! Dialer engaging...</Say>
+        <Number></Number>
       </Response>
     `,
       from: From,
