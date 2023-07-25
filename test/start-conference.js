@@ -16,8 +16,8 @@ console.log("starting conference call...");
 //     twiml: `
 //       <Response>
 //         <Say>Welcome to the party!</Say>
-//         <Conference>My test conference</Conference>
-//         <Dial>+18326595548</Dial>
+//         <Dial>+1832</Dial>
+
 //       </Response>
 //     `,
 //     to: "+18326460869",
@@ -45,10 +45,11 @@ client
   .participants.create({
     label: "teodoro systems",
     earlyMedia: true,
-    beep: "onEnter",
-    statusCallback: "https://myapp.com/events",
-    statusCallbackEvent: ["ringing"],
-    record: true,
+    // beep: "onEnter",
+    conferenceStatusCallbackMethod: "POST",
+    conferenceStatusCallback:
+      "https://3a95-99-130-118-129.ngrok.io/conferences/status-callback",
+    conferenceStatusCallbackEvent: ["start", "end"],
     from: "+12812068992",
     to: "+18328638635",
     startConferenceOnEnter: false,

@@ -33,7 +33,7 @@ app.use("/listing", listingRouter);
 app.use("/person", personRouter);
 app.use("/user", userRouter);
 app.use("/dialer", authMiddleware, dialerRouter);
-app.use("/conference", authMiddleware, conferenceRouter);
+app.use("/conference", conferenceRouter);
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);

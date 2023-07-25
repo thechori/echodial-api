@@ -6,6 +6,16 @@ const router = Router();
 
 let activeConferenceSids: string[] = [];
 
+router.get("/status-callback", (req, res) => {
+  console.log(req);
+  res.status(200).send("ok");
+});
+
+router.post("/status-callback", (req, res) => {
+  console.log(req.body);
+  res.status(200).send("ok");
+});
+
 router.get("/", async (req: Request, res: Response) => {
   twilioClient.conferences
     .list({
