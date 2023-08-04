@@ -1,8 +1,8 @@
 import { Request, Response, Router } from "express";
 import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 //
-import { extractErrorMessage } from "../utils/error";
-import db from "../utils/db";
+import { extractErrorMessage } from "../../utils/error";
+import db from "../../utils/db";
 
 const router = Router();
 

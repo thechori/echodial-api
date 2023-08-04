@@ -1,7 +1,7 @@
 import { Request, Response, Router } from "express";
-import { extractErrorMessage } from "../utils/error";
+import { extractErrorMessage } from "../../utils/error";
 //
-import db from "../utils/db";
+import db from "../../utils/db";
 
 const router = Router();
 
