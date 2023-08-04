@@ -4,11 +4,13 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
 //
+import { authMiddleware } from "./middlewares/auth";
 import authRouter from "./routes/auth";
 import leadRouter from "./routes/lead";
 import userRouter from "./routes/user";
 import dialerRouter from "./routes/dialer";
-import { authMiddleware } from "./middlewares/auth";
+import callerIdRouter from "./routes/caller-id";
+import smsRouter from "./routes/sms";
 
 const app = express();
 
@@ -23,6 +25,8 @@ app.get("/", (req: Request, res: Response) => {
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/lead", leadRouter);
+app.use("/caller-id", authMiddleware, callerIdRouter);
+app.use("/sms", authMiddleware, smsRouter);
 app.use("/dialer", authMiddleware, dialerRouter);
 
 app.listen(process.env.PORT, () => {
