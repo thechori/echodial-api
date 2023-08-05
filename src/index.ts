@@ -8,6 +8,7 @@ import { authMiddleware } from "./middlewares/auth";
 import authRouter from "./routes/auth";
 import leadRouter from "./routes/lead";
 import userRouter from "./routes/user";
+import sessionRouter from "./routes/session";
 import dialerRouter from "./routes/dialer";
 import callerIdRouter from "./routes/caller-id";
 import smsRouter from "./routes/sms";
@@ -24,6 +25,7 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
+app.use("/session", authRouter, sessionRouter);
 app.use("/lead", leadRouter);
 app.use("/caller-id", authMiddleware, callerIdRouter);
 app.use("/sms", authMiddleware, smsRouter);

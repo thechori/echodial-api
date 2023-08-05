@@ -64,6 +64,9 @@ router.post("/", async (req: any, res) => {
     return res.status(400).json({ message: "Invalid email address" });
   }
 
+  // Cleanse email input (lowercase/trim)
+  const emailClean = email.trim().toLowerCase();
+
   try {
     // Hash password before inserting to DB
     const passwordHash = await bcrypt.hash(password, saltRounds);
@@ -71,7 +74,7 @@ router.post("/", async (req: any, res) => {
     // Run DB query
     const newUser = await db("user")
       .insert({
-        email,
+        email: emailClean,
         password_hash: passwordHash,
         first_name: firstName,
         last_name: lastName,

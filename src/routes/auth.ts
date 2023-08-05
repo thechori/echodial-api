@@ -5,18 +5,26 @@ import bcrypt from "bcrypt";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
+import { authMiddleware } from "../middlewares/auth";
 
 dotenv.config();
 const router = Router();
 
-// Old
-router.get("/authorize", (req: Request, res: Response) => {
-  const { authorization } = req.headers;
-  if (authorization === process.env.ADMIN_PASSWORD) {
-    return res.status(200).send("Success");
+// Endpoint is mostly for capturing user behavior, the heavy work is done on the client when they clear the local storage item
+router.get("/sign-out", authMiddleware, async (req: Request, res: Response) => {
+  const { jwt } = res.locals;
+  if (!jwt) {
+    return res.status(400).send("no jwt found");
   }
 
-  return res.status(401).send("Incorrect password");
+  const { id } = jwt;
+
+  await db("user_event").insert({
+    user_id: id,
+    user_event_type_id: 4, // id 4 = "sign-out"
+  });
+
+  return res.status(200).send("ok");
 });
 
 // Sign in
@@ -52,7 +60,13 @@ router.post("/sign-in", async (req, res) => {
     expiresIn: "7d",
   });
 
-  return res.status(200).json(token);
+  res.status(200).json(token);
+
+  // Record `user_event`
+  await db("user_event").insert({
+    user_id: user.id,
+    user_event_type_id: 3, // id 3 = "sign-in"
+  });
 });
 
 // Authenticate
