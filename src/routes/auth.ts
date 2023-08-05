@@ -19,10 +19,10 @@ router.get("/sign-out", authMiddleware, async (req: Request, res: Response) => {
 
   const { id } = jwt;
 
-  await db("user_event").insert({
-    user_id: id,
-    user_event_type_id: 4, // id 4 = "sign-out"
-  });
+  // await db("user_event").insert({
+  //   user_id: id,
+  //   user_event_type_id: 4, // id 4 = "sign-out"
+  // });
 
   return res.status(200).send("ok");
 });
@@ -57,16 +57,17 @@ router.post("/sign-in", async (req, res) => {
 
   // Generate JWT
   const token = jwt.sign(user, process.env.BCRYPT_SECRET as string, {
-    expiresIn: "7d",
+    // expiresIn: "7d",
+    expiresIn: "1m",
   });
 
   res.status(200).json(token);
 
   // Record `user_event`
-  await db("user_event").insert({
-    user_id: user.id,
-    user_event_type_id: 3, // id 3 = "sign-in"
-  });
+  // await db("user_event").insert({
+  //   user_id: user.id,
+  //   user_event_type_id: 3, // id 3 = "sign-in"
+  // });
 });
 
 // Authenticate
