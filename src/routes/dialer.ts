@@ -1,63 +1,67 @@
-import { Router } from "express";
+import { Router, request } from "express";
 import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 //
-import twilioClient from "../services/twilio";
 import tokenGenerator from "../utils/twilio/token-generator";
+import { authMiddleware } from "../middlewares/auth";
 
 const router = Router();
 
-router.post("/call", (req, res) => {
-  const { From, To } = req.body;
+router.get("/", (req, res) => res.send("ok"));
 
-  twilioClient.calls
-    .create({
-      twiml: `
-      <Response>
-        <Say>Welcome! Dialer engaging...</Say>
-        <Number></Number>
-      </Response>
-    `,
-      from: From,
-      to: To,
-    })
-    .then((call) => console.log(call.sid));
-});
-
-// Take an
-router.post("/transfer", (req, res) => {
-  const { call_sid } = req.body;
-
-  twilioClient
-    .calls(call_sid)
-    .update({ method: "POST", url: "http://demo.twilio.com/docs/voice.xml" })
-    .then((call) => console.log(call.to));
-});
-
-// We call our endpoint from the VOIP browser client
-// We pass in the numbers we want to call
-// [ ] Greets you
-// [ ] Takes an array of `to` numbers
-// [ ] Calls them all, connects on answer, hang up on others
 router.post("/", (req, res) => {
-  console.log("req.body", req.body);
-  const { From, To } = req.body;
-
-  // const callerId = twilioConfig.callerId;
-
-  const response = new VoiceResponse();
-
-  response.say("welcome! autodialer initializing...");
-
-  // for (let i = 0; i < toNumbers.length; i++) {
-  response.number(To).dial({ callerId: From });
-  // response.dial({ "callerId": "", toNumbers[i]);
-  // }
-
+  console.log("/voice", req.body);
   res.set("Content-Type", "text/xml");
-  res.status(200).send(response.toString());
+  res.send(voiceResponse(req.body));
 });
 
-router.get("/token", (req, res) => {
+function voiceResponse(requestBody: any) {
+  const toNumberOrClientName = requestBody.To;
+  const callerId = requestBody.From;
+  const identity = requestBody.Identity;
+
+  let twiml = new VoiceResponse();
+
+  // If the request to the /voice endpoint is TO your Twilio Number,
+  // then it is an incoming call towards your Twilio.Device.
+  if (toNumberOrClientName == callerId) {
+    let dial = twiml.dial();
+
+    // This will connect the caller with your Twilio.Device/client
+    dial.client(identity);
+  } else if (requestBody.To) {
+    // This is an outgoing call
+
+    // set the callerId
+    let dial = twiml.dial({ callerId });
+
+    // Check if the 'To' parameter is a Phone Number or Client Name
+    // in order to use the appropriate TwiML noun
+    const attr = "number";
+    dial[attr]({}, toNumberOrClientName);
+  } else {
+    twiml.say("Thanks for calling!");
+  }
+
+  return twiml.toString();
+}
+
+// router.post("/", (req, res) => {
+//   console.log("req.body", req.body);
+//   const { From, To } = req.body;
+
+//   const response = new VoiceResponse();
+
+//   response
+//     .dial({
+//       callerId: From,
+//     })
+//     .number(To); // also try "client" if this doesn't work
+
+//   res.set("Content-Type", "text/xml");
+//   res.status(200).send(response.toString());
+// });
+
+router.get("/token", authMiddleware, (req, res) => {
   res.status(200).send(tokenGenerator());
 });
 
