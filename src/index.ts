@@ -25,8 +25,8 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
-app.use("/session", authRouter, sessionRouter);
-app.use("/lead", leadRouter);
+app.use("/session", authMiddleware, sessionRouter);
+app.use("/lead", authMiddleware, leadRouter);
 app.use("/caller-id", authMiddleware, callerIdRouter);
 app.use("/sms", authMiddleware, smsRouter);
 app.use("/dialer", authMiddleware, dialerRouter);
