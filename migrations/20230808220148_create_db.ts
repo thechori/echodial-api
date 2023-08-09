@@ -9,7 +9,7 @@ export async function up(knex: Knex): Promise<void> {
       table.string("first_name", 255).notNullable(); // Raymund
       table.string("last_name", 255).notNullable(); // Teodoro
       table.string("timezone", 255); // America/Chicago or CST?
-      table.string("phone", 12).notNullable(); // +18326460869
+      table.string("phone", 12); // +18326460869
       //
       table.timestamps();
     })
@@ -96,10 +96,10 @@ export async function up(knex: Knex): Promise<void> {
 
 export async function down(knex: Knex): Promise<void> {
   return knex.schema
-    .dropTable("user")
     .dropTable("caller_id")
-    .dropTable("lead")
-    .dropTable("call")
+    .dropTable("phase_lead")
     .dropTable("phase")
-    .dropTable("phase_lead");
+    .dropTable("call")
+    .dropTable("lead")
+    .dropTable("user");
 }

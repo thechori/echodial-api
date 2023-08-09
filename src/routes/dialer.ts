@@ -9,7 +9,6 @@ const router = Router();
 router.get("/", (req, res) => res.send("ok"));
 
 router.post("/", (req, res) => {
-  console.log("/dialer", req.body);
   res.set("Content-Type", "text/xml");
   res.send(voiceResponse(req.body));
 });
@@ -38,6 +37,8 @@ function voiceResponse(requestBody: any) {
     // in order to use the appropriate TwiML noun
     const attr = "number";
     dial[attr]({}, toNumberOrClientName);
+
+    // Store in DB
   } else {
     twiml.say("Thanks for calling!");
   }
