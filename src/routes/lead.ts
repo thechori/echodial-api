@@ -10,6 +10,37 @@ router.get("/", async (req: Request, res: Response) => {
   res.status(200).send(leads);
 });
 
+router.delete("/:id", async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  if (id === null) {
+    return res.status(400).send("Missing `id` field");
+  }
+
+  try {
+    await db("lead").del().where("id", id);
+    return res.status(200).send("Successfully deleted lead");
+  } catch (error) {
+    return res.status(500).send(extractErrorMessage(error));
+  }
+});
+
+router.post("/bulk-delete", async (req, res) => {
+  const { ids } = req.body;
+
+  if (!ids) {
+    return res.status(400).send("Missing `ids` field (or malformed)");
+  }
+
+  try {
+    const a = await db("lead").whereIn("id", ids).del();
+    console.log("a", a);
+    return res.status(200).send(`Successfully deleted ${a} lead(s)`);
+  } catch (error) {
+    return res.status(500).send(extractErrorMessage(error));
+  }
+});
+
 // Handle the creation of one Lead at a time via manual input
 router.post("/", async (req, res) => {
   const { email, phone, first_name, last_name } = req.body;
