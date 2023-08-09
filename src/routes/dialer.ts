@@ -9,7 +9,7 @@ const router = Router();
 router.get("/", (req, res) => res.send("ok"));
 
 router.post("/", (req, res) => {
-  console.log("/voice", req.body);
+  console.log("/dialer", req.body);
   res.set("Content-Type", "text/xml");
   res.send(voiceResponse(req.body));
 });
