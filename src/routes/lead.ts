@@ -18,10 +18,18 @@ router.post("/", async (req, res) => {
     return res.status(400).send("New lead must have at least a phone number");
   }
 
+  // Trim and strip all non-numeric characters
+  const trimmedVal = phone.trim();
+  const digits = trimmedVal.replace(/\D/g, "");
+
+  if (digits.length !== 10) {
+    return res.status(400).send("Invalid phone number");
+  }
+
   try {
     const newLead = await db("lead").insert({
       email,
-      phone: `+!${phone}`, // Note: Hardcoding country code for best UX
+      phone: `+1${digits}`, // Note: Hardcoding country code for best UX
       first_name,
       last_name,
     });
