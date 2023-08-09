@@ -7,7 +7,9 @@
     "dev": "nodemon --watch './**/*.ts' --exec 'ts-node' src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "test": "jest"
+    "test": "jest",
+    "db:migrate:latest:dev": "knex migrate:latest --env development",
+    "generate-types:dev": "NODE_ENV=development ts-node scripts/generate-types-from-db.ts"
   },
   "author": "Teodoro Systems LLC",
   "license": "ISC",

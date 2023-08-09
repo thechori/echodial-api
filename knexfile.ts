@@ -5,7 +5,7 @@ dotenv.config();
 
 const config: { [key: string]: Knex.Config } = {
   development: {
-    client: "postgresql",
+    client: "pg",
     seeds: {
       directory: "./seeds",
     },
@@ -29,7 +29,7 @@ const config: { [key: string]: Knex.Config } = {
   },
 
   production: {
-    client: "postgresql",
+    client: "pg",
     connection: {
       user: process.env.DB_USER,
       password: process.env.DB_PASSWORD,
@@ -50,4 +50,4 @@ const config: { [key: string]: Knex.Config } = {
   },
 };
 
-module.exports = config;
+export default config;
