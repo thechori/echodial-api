@@ -1,4 +1,8 @@
 import { Request, Response, Router } from "express";
+import multer from "multer";
+import * as csv from "fast-csv";
+import fs from "fs";
+import path from "path";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
@@ -71,7 +75,58 @@ router.post("/", async (req, res) => {
 });
 
 // Handle the bulk upload of Leads via CSV files
-router.post("/csv", (req, res) => {});
+const upload = multer({ dest: "tmp/csv/" });
+
+router.post("/csv", upload.single("file"), function (req, res) {
+  // Works
+  const { source } = req.body;
+
+  // Validate file existence
+  if (!req.file) {
+    return res.status(400).send("Missing `file` field");
+  }
+
+  const fileRows: any = [];
+
+  // Open uploaded file
+  csv
+    .parseFile(req.file.path)
+    .on("data", function (data: any) {
+      fileRows.push(data); // push each row
+    })
+    .on("end", function () {
+      // @ts-ignore
+      fs.unlinkSync(req.file.path); // Remove temp file
+
+      // Check for length
+      if (fileRows.length < 2) {
+        res.status(400).send("CSV file has no data");
+      }
+
+      // Validate structure
+      const headers = {
+        email: null,
+        phone: null,
+        first_name: null,
+        last_name: null,
+      };
+
+      // Search first index of fileRows to create column mapping
+      const h = fileRows[0];
+      headers.email = h.indexOf("email");
+      headers.phone = h.indexOf("phone");
+      headers.first_name = h.indexOf("first_name");
+      headers.last_name = h.indexOf("last_name");
+
+      // console.log("fileRows", fileRows); // [['7', 'angela', 'bella']]
+      console.log("header map", headers);
+
+      res.status(200).send(fileRows);
+    })
+    .on("error", (error: any) => {
+      res.status(500).send(extractErrorMessage(error));
+    });
+});
 
 router.get("/pretty", async (req: Request, res: Response) => {
   const leads = await db("lead")
