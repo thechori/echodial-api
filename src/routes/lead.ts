@@ -33,9 +33,8 @@ router.post("/bulk-delete", async (req, res) => {
   }
 
   try {
-    const a = await db("lead").whereIn("id", ids).del();
-    console.log("a", a);
-    return res.status(200).send(`Successfully deleted ${a} lead(s)`);
+    const rowsDeleted = await db("lead").whereIn("id", ids).del();
+    return res.status(200).send(`Successfully deleted ${rowsDeleted} lead(s)`);
   } catch (error) {
     return res.status(500).send(extractErrorMessage(error));
   }

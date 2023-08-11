@@ -6,7 +6,7 @@ function sendText(toNumber: string) {
     .create({
       body: "Hello! This is Ryan. I've been told that you're interested in some mortgage protection or final expense insurance. Is that correct?",
       to: toNumber,
-      from: numbers.barker,
+      from: numbers.l34dsSmsSender,
     })
     .then((message: any) => console.log(message.sid));
 }

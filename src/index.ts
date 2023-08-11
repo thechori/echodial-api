@@ -19,7 +19,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
-app.use(morgan("tiny"));
+app.use(morgan("common"));
 
 app.get("/", (req: Request, res: Response) => {
   res.send("l34ds");

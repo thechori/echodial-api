@@ -4,6 +4,7 @@
 export enum Table {
   Call = "call",
   CallerId = "caller_id",
+  IncomingNumber = "incoming_number",
   KnexMigrations = "knex_migrations",
   KnexMigrationsLock = "knex_migrations_lock",
   Lead = "lead",
@@ -15,6 +16,7 @@ export enum Table {
 export type Tables = {
   "call": Call,
   "caller_id": CallerId,
+  "incoming_number": IncomingNumber,
   "knex_migrations": KnexMigrations,
   "knex_migrations_lock": KnexMigrationsLock,
   "lead": Lead,
@@ -29,8 +31,8 @@ export type Call = {
   lead_id: number;
   duration_ms: number;
   notes: string | null;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type CallerId = {
@@ -38,8 +40,19 @@ export type CallerId = {
   user_id: number;
   twilio_sid: string;
   phone_number: string;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type IncomingNumber = {
+  id: number;
+  sid: string;
+  phone_number: string;
+  user_id: number | null;
+  friendly_name: string | null;
+  description: string | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type KnexMigrations = {
@@ -66,24 +79,24 @@ export type Lead = {
   state: string | null;
   zip: string | null;
   source: string | null;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type Phase = {
   id: number;
   name: string;
   description: string;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type PhaseLead = {
   id: number;
   phase_id: number;
   lead_id: number;
-  created_at: Date | null;
-  updated_at: Date | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type User = {
@@ -93,8 +106,9 @@ export type User = {
   first_name: string;
   last_name: string;
   timezone: string | null;
-  phone: string;
-  created_at: Date | null;
-  updated_at: Date | null;
+  phone: string | null;
+  created_at: Date;
+  updated_at: Date;
+  approved_for_beta: boolean | null;
 };
 

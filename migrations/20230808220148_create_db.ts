@@ -11,7 +11,7 @@ export async function up(knex: Knex): Promise<void> {
       table.string("timezone", 255); // America/Chicago or CST?
       table.string("phone", 12); // +18326460869
       //
-      table.timestamps();
+      table.timestamps(true, true);
     })
 
     .createTable("caller_id", (table) => {
@@ -25,7 +25,7 @@ export async function up(knex: Knex): Promise<void> {
       table.string("twilio_sid", 255).notNullable(); // PN63589e2acc45ae058e148736186c7f52
       table.string("phone_number", 12).notNullable(); // +18326460869
       //
-      table.timestamps();
+      table.timestamps(true, true);
     })
 
     .createTable("lead", (table) => {
@@ -41,7 +41,7 @@ export async function up(knex: Knex): Promise<void> {
       table.string("zip", 9); // 77079-3151
       table.string("source", 255);
       //
-      table.timestamps();
+      table.timestamps(true, true);
     })
 
     .createTable("call", (table) => {
@@ -64,7 +64,7 @@ export async function up(knex: Knex): Promise<void> {
         .comment("Duration of the call in milliseconds");
       table.text("notes"); // This lead was a waste of time.
       //
-      table.timestamps();
+      table.timestamps(true, true);
     })
 
     .createTable("phase", (table) => {
@@ -72,7 +72,7 @@ export async function up(knex: Knex): Promise<void> {
       table.string("name", 255).notNullable(); // Fresh leads
       table.string("description", 255).notNullable(); // These are brand new leads from ABC Leads (1-10 days old)
       //
-      table.timestamps();
+      table.timestamps(true, true);
     })
 
     .createTable("phase_lead", (table) => {
@@ -90,7 +90,7 @@ export async function up(knex: Knex): Promise<void> {
         .inTable("lead")
         .notNullable();
       //
-      table.timestamps();
+      table.timestamps(true, true);
     });
 }
 

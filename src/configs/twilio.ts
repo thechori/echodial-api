@@ -41,7 +41,7 @@ twilioConfig.accountSid = TWILIO_SID;
 twilioConfig.authToken = TWILIO_AUTH_TOKEN;
 
 twilioConfig.twimlAppSid = TWILIO_TWIML_APP_SID;
-twilioConfig.callerId = numbers.barker; // FROM number
+twilioConfig.callerId = numbers.l34dsSmsSender; // FROM number
 
 twilioConfig.apiKey = TWILIO_API_KEY;
 twilioConfig.apiSecret = TWILIO_API_SECRET;

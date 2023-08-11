@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import jwt from "jsonwebtoken";
+import jwt, { decode } from "jsonwebtoken";
 //
 import { RequestHandler } from "express";
 import { extractErrorMessage } from "../utils/error";
@@ -17,13 +17,13 @@ export const authMiddleware: RequestHandler = async (req, res, next) => {
   try {
     // Extract and verify JWT
     const token = authorization.split(" ")[1];
-    const jwtVerified = await jwt.verify(
+    const jwt_decoded = await jwt.verify(
       token,
       process.env.BCRYPT_SECRET as string
     );
 
     // Attach JWT to req for each access
-    res.locals.jwt = jwtVerified;
+    res.locals.jwt_decoded = jwt_decoded;
 
     // Continue
     return next();
