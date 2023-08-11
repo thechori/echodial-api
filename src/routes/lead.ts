@@ -6,6 +6,7 @@ import path from "path";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
+import { Lead } from "../types";
 
 const router = Router();
 
@@ -86,7 +87,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
     return res.status(400).send("Missing `file` field");
   }
 
-  const fileRows: any = [];
+  const fileRows: string[][] = []; // [ ["1", "ryan", "teodoro", "thechori@gmail.com", "+18326460869"], [...], [...] ]
 
   // Open uploaded file
   csv
@@ -94,9 +95,11 @@ router.post("/csv", upload.single("file"), function (req, res) {
     .on("data", function (data: any) {
       fileRows.push(data); // push each row
     })
-    .on("end", function () {
+    .on("end", async function () {
       // @ts-ignore
       fs.unlinkSync(req.file.path); // Remove temp file
+
+      console.log("fileRows", fileRows);
 
       // Check for length
       if (fileRows.length < 2) {
@@ -104,7 +107,12 @@ router.post("/csv", upload.single("file"), function (req, res) {
       }
 
       // Validate structure
-      const headers = {
+      const requiredColumnHeaders: {
+        email: number | null;
+        phone: number | null;
+        first_name: number | null;
+        last_name: number | null;
+      } = {
         email: null,
         phone: null,
         first_name: null,
@@ -112,14 +120,59 @@ router.post("/csv", upload.single("file"), function (req, res) {
       };
 
       // Search first index of fileRows to create column mapping
-      const h = fileRows[0];
-      headers.email = h.indexOf("email");
-      headers.phone = h.indexOf("phone");
-      headers.first_name = h.indexOf("first_name");
-      headers.last_name = h.indexOf("last_name");
+      const h = fileRows.shift(); // better way
+      // const h = fileRows[0]; // old way
+
+      if (!h) {
+        return res
+          .status(400)
+          .send(
+            "CSV file corrupted. Please check the structure (e.g., column names) upload another one."
+          );
+      }
+
+      // Ensure that all column maps were found, if not, show error
+      requiredColumnHeaders.email = h.indexOf("email");
+      requiredColumnHeaders.phone = h.indexOf("phone");
+      requiredColumnHeaders.first_name = h.indexOf("first_name");
+      requiredColumnHeaders.last_name = h.indexOf("last_name");
+
+      const columnErrors: string[] = [];
+
+      for (const [key, value] of Object.entries(requiredColumnHeaders)) {
+        console.log(`${key} - ${value}`);
+        if (value === null) {
+          console.error(`Column ${key} is missing data.`);
+          columnErrors.push(key);
+        }
+      }
+
+      if (columnErrors.length) {
+        return res
+          .status(400)
+          .send(
+            `Errors found in (${
+              columnErrors.length
+            }) columns: ${columnErrors.join(", ")}`
+          );
+      }
 
       // console.log("fileRows", fileRows); // [['7', 'angela', 'bella']]
-      console.log("header map", headers);
+      console.log("header map", requiredColumnHeaders);
+
+      // Transform CSV output structure to match DB schema
+      const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
+        return {
+          email: row[requiredColumnHeaders.email as number],
+          phone: row[requiredColumnHeaders.phone as number],
+          first_name: row[requiredColumnHeaders.first_name as number],
+          last_name: row[requiredColumnHeaders.last_name as number],
+        };
+      });
+
+      // Insert into DB
+      const dbRes = await db("lead").insert(leadsToInsert);
+      console.log("dbRes", dbRes);
 
       res.status(200).send(fileRows);
     })
