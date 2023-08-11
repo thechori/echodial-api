@@ -3,6 +3,7 @@ require("dotenv").config();
 import express, { Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import morgan from "morgan";
 //
 import { authMiddleware } from "./middlewares/auth";
 import authRouter from "./routes/auth";
@@ -18,6 +19,7 @@ const app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());
+app.use(morgan("tiny"));
 
 app.get("/", (req: Request, res: Response) => {
   res.send("l34ds");
