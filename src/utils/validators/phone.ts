@@ -1,8 +1,8 @@
-// Value must be 10 numeric digits for proper insertion into DB
+// Value must be "+1" followed by 10 numeric digits for proper insertion into DB
 // E.g., +18326460869
 export const isValidPhoneNumberForDb = (input: string) => {
   // Check if the resulting string is a valid phone number
-  const phoneNumberPattern = /^\+[1-9]{1}[0-9]{3,14}$/;
+  const phoneNumberPattern = /\+1\d{10}/;
 
   return phoneNumberPattern.test(input);
 };

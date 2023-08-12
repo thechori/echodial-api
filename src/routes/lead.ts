@@ -7,6 +7,10 @@ import path from "path";
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
 import { Lead } from "../types";
+import {
+  isValidPhoneNumberForDb,
+  transformPhoneNumberForDb,
+} from "../utils/validators/phone";
 
 const router = Router();
 
@@ -54,17 +58,16 @@ router.post("/", async (req, res) => {
   }
 
   // Trim and strip all non-numeric characters
-  const trimmedVal = phone.trim();
-  const digits = trimmedVal.replace(/\D/g, "");
+  const phoneNumberForDb = transformPhoneNumberForDb(phone);
 
-  if (digits.length !== 10) {
+  if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
     return res.status(400).send("Invalid phone number");
   }
 
   try {
     const newLead = await db("lead").insert({
       email,
-      phone: `+1${digits}`, // Note: Hardcoding country code for best UX
+      phone: phoneNumberForDb, // Note: Hardcoding country code for best UX
       first_name,
       last_name,
       source,
@@ -139,7 +142,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
       const columnErrors: string[] = [];
 
       for (const [key, value] of Object.entries(requiredColumnHeaders)) {
-        if (value === null) {
+        if (value === null || value === -1) {
           console.error(`Column ${key} is missing data.`);
           columnErrors.push(key);
         }
@@ -160,13 +163,20 @@ router.post("/csv", upload.single("file"), function (req, res) {
 
       // Transform CSV output structure to match DB schema
       const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
-        // Validate phone number
-
         // Transform phone number
+        const rawPhoneValue = row[requiredColumnHeaders.phone as number];
+        const phoneNumberForDb = transformPhoneNumberForDb(rawPhoneValue);
+
+        // Validate phone number
+        if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
+          throw new Error(
+            `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`
+          );
+        }
 
         return {
           email: row[requiredColumnHeaders.email as number],
-          phone: row[requiredColumnHeaders.phone as number],
+          phone: phoneNumberForDb,
           first_name: row[requiredColumnHeaders.first_name as number],
           last_name: row[requiredColumnHeaders.last_name as number],
           source,
