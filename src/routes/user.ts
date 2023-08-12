@@ -4,7 +4,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 //
 import db from "../utils/db";
-import { isValidPhoneNumber } from "../utils/validators/phone";
+import { isValidPhoneNumberForDb } from "../utils/validators/phone";
 import { isValidEmailAddress } from "../utils/validators/email";
 import { authMiddleware } from "../middlewares/auth";
 import { saltRounds } from "../configs/auth";
@@ -48,7 +48,7 @@ router.post("/", async (req: any, res) => {
     return res.status(400).json({ message: "Missing required fields" });
   }
 
-  if (phone && !isValidPhoneNumber(phone)) {
+  if (phone && !isValidPhoneNumberForDb(phone)) {
     return res.status(400).json({ message: "Invalid phone number" });
   }
 

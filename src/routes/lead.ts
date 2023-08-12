@@ -47,7 +47,7 @@ router.post("/bulk-delete", async (req, res) => {
 
 // Handle the creation of one Lead at a time via manual input
 router.post("/", async (req, res) => {
-  const { email, phone, first_name, last_name } = req.body;
+  const { email, phone, first_name, last_name, source } = req.body;
 
   if (!phone) {
     return res.status(400).send("New lead must have at least a phone number");
@@ -67,6 +67,7 @@ router.post("/", async (req, res) => {
       phone: `+1${digits}`, // Note: Hardcoding country code for best UX
       first_name,
       last_name,
+      source,
     });
 
     return res.status(200).send(newLead);
@@ -98,8 +99,6 @@ router.post("/csv", upload.single("file"), function (req, res) {
     .on("end", async function () {
       // @ts-ignore
       fs.unlinkSync(req.file.path); // Remove temp file
-
-      console.log("fileRows", fileRows);
 
       // Check for length
       if (fileRows.length < 2) {
@@ -140,7 +139,6 @@ router.post("/csv", upload.single("file"), function (req, res) {
       const columnErrors: string[] = [];
 
       for (const [key, value] of Object.entries(requiredColumnHeaders)) {
-        console.log(`${key} - ${value}`);
         if (value === null) {
           console.error(`Column ${key} is missing data.`);
           columnErrors.push(key);
@@ -162,11 +160,16 @@ router.post("/csv", upload.single("file"), function (req, res) {
 
       // Transform CSV output structure to match DB schema
       const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
+        // Validate phone number
+
+        // Transform phone number
+
         return {
           email: row[requiredColumnHeaders.email as number],
           phone: row[requiredColumnHeaders.phone as number],
           first_name: row[requiredColumnHeaders.first_name as number],
           last_name: row[requiredColumnHeaders.last_name as number],
+          source,
         };
       });
 
