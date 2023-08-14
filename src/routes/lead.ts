@@ -32,8 +32,20 @@ router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { body } = req;
 
+  // Validate phone
+  const phoneNumberForDb = transformPhoneNumberForDb(body.phone);
+
+  if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
+    return res.status(400).send("Phone number is not valid");
+  }
+
   try {
-    const rowsAffected = await db("lead").where("id", id).update(body);
+    const rowsAffected = await db("lead")
+      .where("id", id)
+      .update({
+        ...body,
+        phone: phoneNumberForDb,
+      });
     return res
       .status(200)
       .json({ message: `Successfully updated lead`, data: rowsAffected });
@@ -211,12 +223,10 @@ router.post("/csv", upload.single("file"), function (req, res) {
 
         // Insert into DB
         await db("lead").insert(leadsToInsert);
-        res
-          .status(200)
-          .json({
-            message: `Successfully uploaded ${fileRows.length} leads`,
-            data: fileRows,
-          });
+        res.status(200).json({
+          message: `Successfully uploaded ${fileRows.length} leads`,
+          data: fileRows,
+        });
       } catch (e) {
         res.status(500).send(extractErrorMessage(e));
       }
