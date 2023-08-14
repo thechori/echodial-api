@@ -31,12 +31,12 @@ router.get("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { body } = req;
-  console.log("body", body);
 
   try {
-    const a = await db("call").where("id", id).update(body);
-    console.log("a", a);
-    return res.status(200).send(a);
+    const rowsAffected = await db("lead").where("id", id).update(body);
+    return res
+      .status(200)
+      .json({ message: `Successfully updated lead`, data: rowsAffected });
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
@@ -67,8 +67,11 @@ router.post("/bulk-delete", async (req, res) => {
   }
 
   try {
-    const rowsDeleted = await db("lead").whereIn("id", ids).del();
-    return res.status(200).send(rowsDeleted);
+    const rowsDeletedCount = await db("lead").whereIn("id", ids).del();
+    return res.status(200).json({
+      message: `Deleted ${rowsDeletedCount} rows`,
+      data: rowsDeletedCount,
+    });
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
@@ -182,9 +185,6 @@ router.post("/csv", upload.single("file"), function (req, res) {
           );
       }
 
-      // console.log("fileRows", fileRows); // [['7', 'angela', 'bella']]
-      console.log("header map", requiredColumnHeaders);
-
       try {
         // Transform CSV output structure to match DB schema
         const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
@@ -210,10 +210,13 @@ router.post("/csv", upload.single("file"), function (req, res) {
         });
 
         // Insert into DB
-        const dbRes = await db("lead").insert(leadsToInsert);
-        console.log("dbRes", dbRes);
-
-        res.status(200).send(fileRows);
+        await db("lead").insert(leadsToInsert);
+        res
+          .status(200)
+          .json({
+            message: `Successfully uploaded ${fileRows.length} leads`,
+            data: fileRows,
+          });
       } catch (e) {
         res.status(500).send(extractErrorMessage(e));
       }
