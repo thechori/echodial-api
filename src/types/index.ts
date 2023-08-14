@@ -29,7 +29,7 @@ export type Call = {
   id: number;
   user_id: number;
   lead_id: number;
-  duration_ms: number;
+  duration_ms: number | null;
   notes: string | null;
   created_at: Date;
   updated_at: Date;

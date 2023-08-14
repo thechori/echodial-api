@@ -24,7 +24,7 @@ router.get("/sign-out", authMiddleware, async (req: Request, res: Response) => {
   //   user_event_type_id: 4, // id 4 = "sign-out"
   // });
 
-  return res.status(200).send("ok");
+  return res.status(200).send();
 });
 
 // Sign in

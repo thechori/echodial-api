@@ -56,8 +56,8 @@ router.post("/", async (req, res) => {
   };
 
   try {
-    await db("call").insert(newCall);
-    return res.status(200).send("Successfully created new Call");
+    const dbResult = await db("call").insert(newCall);
+    return res.status(200).send(dbResult);
   } catch (e) {
     return res.status(500).json({ message: extractErrorMessage(e) });
   }
@@ -88,9 +88,8 @@ router.delete("/:id", async (req, res) => {
   }
 
   try {
-    const b = await db("caller_id").del().where("id", id);
-    console.log("b", b);
-    return res.status(200).send("Successfully deleted caller id");
+    const dbResult = await db("caller_id").del().where("id", id);
+    return res.status(200).send(dbResult);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }

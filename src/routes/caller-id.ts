@@ -153,9 +153,8 @@ router.post("/delete", async (req, res) => {
 
   // Delete L34DS Caller ID
   try {
-    const b = await db("caller_id").del().where("id", id);
-    console.log("b", b);
-    return res.status(200).send("Successfully deleted caller id");
+    const dbResult = await db("caller_id").del().where("id", id);
+    return res.status(200).send(dbResult);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }

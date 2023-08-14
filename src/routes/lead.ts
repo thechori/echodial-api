@@ -1,8 +1,7 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import multer from "multer";
 import * as csv from "fast-csv";
 import fs from "fs";
-import path from "path";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
@@ -12,14 +11,39 @@ import {
   transformPhoneNumberForDb,
 } from "../utils/validators/phone";
 
+// Handle the bulk upload of Leads via CSV files
+const upload = multer({ dest: "tmp/csv/" });
+
 const router = Router();
 
-router.get("/", async (req: Request, res: Response) => {
-  const leads = await db("lead");
+// Get all Leads
+router.get("/", async (req, res) => {
+  const { id } = res.locals.jwt_decoded;
+
+  const leads = await db("lead").where({
+    user_id: id,
+  });
+
   res.status(200).send(leads);
 });
 
-router.delete("/:id", async (req: Request, res: Response) => {
+// Update Lead
+router.put("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { body } = req;
+  console.log("body", body);
+
+  try {
+    const a = await db("call").where("id", id).update(body);
+    console.log("a", a);
+    return res.status(200).send(a);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+// Delete Lead
+router.delete("/:id", async (req, res) => {
   const { id } = req.params;
 
   if (id === null) {
@@ -27,13 +51,14 @@ router.delete("/:id", async (req: Request, res: Response) => {
   }
 
   try {
-    await db("lead").del().where("id", id);
-    return res.status(200).send("Successfully deleted lead");
+    const deletionResult = await db("lead").del().where("id", id);
+    return res.status(200).send(deletionResult);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
 });
 
+// Delete multiple Leads
 router.post("/bulk-delete", async (req, res) => {
   const { ids } = req.body;
 
@@ -43,14 +68,15 @@ router.post("/bulk-delete", async (req, res) => {
 
   try {
     const rowsDeleted = await db("lead").whereIn("id", ids).del();
-    return res.status(200).send(`Successfully deleted ${rowsDeleted} lead(s)`);
+    return res.status(200).send(rowsDeleted);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
 });
 
-// Handle the creation of one Lead at a time via manual input
+// Create new Lead (single)
 router.post("/", async (req, res) => {
+  const { id } = res.locals.jwt_decoded;
   const { email, phone, first_name, last_name, source } = req.body;
 
   if (!phone) {
@@ -66,6 +92,7 @@ router.post("/", async (req, res) => {
 
   try {
     const newLead = await db("lead").insert({
+      user_id: id,
       email,
       phone: phoneNumberForDb, // Note: Hardcoding country code for best UX
       first_name,
@@ -79,11 +106,8 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Handle the bulk upload of Leads via CSV files
-const upload = multer({ dest: "tmp/csv/" });
-
 router.post("/csv", upload.single("file"), function (req, res) {
-  // Works
+  const { id } = res.locals.jwt_decoded;
   const { source } = req.body;
 
   // Validate file existence
@@ -176,6 +200,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
           }
 
           return {
+            user_id: id,
             email: row[requiredColumnHeaders.email as number],
             phone: phoneNumberForDb,
             first_name: row[requiredColumnHeaders.first_name as number],
@@ -198,7 +223,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
     });
 });
 
-router.get("/pretty", async (req: Request, res: Response) => {
+router.get("/pretty", async (req, res) => {
   const leads = await db("lead")
     .join("person", "person_id", "person.id")
     .join("campaign", "campaign_id", "campaign.id")
