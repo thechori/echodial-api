@@ -29,8 +29,8 @@ router.delete("/:id", async (req: Request, res: Response) => {
   try {
     await db("lead").del().where("id", id);
     return res.status(200).send("Successfully deleted lead");
-  } catch (error) {
-    return res.status(500).send(extractErrorMessage(error));
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
   }
 });
 
@@ -44,8 +44,8 @@ router.post("/bulk-delete", async (req, res) => {
   try {
     const rowsDeleted = await db("lead").whereIn("id", ids).del();
     return res.status(200).send(`Successfully deleted ${rowsDeleted} lead(s)`);
-  } catch (error) {
-    return res.status(500).send(extractErrorMessage(error));
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
   }
 });
 
@@ -74,8 +74,8 @@ router.post("/", async (req, res) => {
     });
 
     return res.status(200).send(newLead);
-  } catch (error) {
-    return res.status(500).send(extractErrorMessage(error));
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
   }
 });
 
@@ -161,36 +161,40 @@ router.post("/csv", upload.single("file"), function (req, res) {
       // console.log("fileRows", fileRows); // [['7', 'angela', 'bella']]
       console.log("header map", requiredColumnHeaders);
 
-      // Transform CSV output structure to match DB schema
-      const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
-        // Transform phone number
-        const rawPhoneValue = row[requiredColumnHeaders.phone as number];
-        const phoneNumberForDb = transformPhoneNumberForDb(rawPhoneValue);
+      try {
+        // Transform CSV output structure to match DB schema
+        const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
+          // Transform phone number
+          const rawPhoneValue = row[requiredColumnHeaders.phone as number];
+          const phoneNumberForDb = transformPhoneNumberForDb(rawPhoneValue);
 
-        // Validate phone number
-        if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
-          throw new Error(
-            `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`
-          );
-        }
+          // Validate phone number
+          if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
+            throw new Error(
+              `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`
+            );
+          }
 
-        return {
-          email: row[requiredColumnHeaders.email as number],
-          phone: phoneNumberForDb,
-          first_name: row[requiredColumnHeaders.first_name as number],
-          last_name: row[requiredColumnHeaders.last_name as number],
-          source,
-        };
-      });
+          return {
+            email: row[requiredColumnHeaders.email as number],
+            phone: phoneNumberForDb,
+            first_name: row[requiredColumnHeaders.first_name as number],
+            last_name: row[requiredColumnHeaders.last_name as number],
+            source,
+          };
+        });
 
-      // Insert into DB
-      const dbRes = await db("lead").insert(leadsToInsert);
-      console.log("dbRes", dbRes);
+        // Insert into DB
+        const dbRes = await db("lead").insert(leadsToInsert);
+        console.log("dbRes", dbRes);
 
-      res.status(200).send(fileRows);
+        res.status(200).send(fileRows);
+      } catch (e) {
+        res.status(500).send(extractErrorMessage(e));
+      }
     })
-    .on("error", (error: any) => {
-      res.status(500).send(extractErrorMessage(error));
+    .on("error", (e: any) => {
+      res.status(500).send(extractErrorMessage(e));
     });
 });
 

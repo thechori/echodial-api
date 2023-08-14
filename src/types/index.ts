@@ -33,6 +33,10 @@ export type Call = {
   notes: string | null;
   created_at: Date;
   updated_at: Date;
+  from_number: string;
+  to_number: string;
+  was_answered: boolean;
+  status: string | null;
 };
 
 export type CallerId = {

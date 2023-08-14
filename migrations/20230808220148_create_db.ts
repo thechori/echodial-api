@@ -62,7 +62,7 @@ export async function up(knex: Knex): Promise<void> {
         .integer("duration_ms") // 300000 ms = 5 min
         .notNullable()
         .comment("Duration of the call in milliseconds");
-      table.text("notes"); // This lead was a waste of time.
+      table.text("notes"); // Initial call. Person was interested, asked me to follow up. Set a meeting for next Monday at 1pm.
       //
       table.timestamps(true, true);
     })

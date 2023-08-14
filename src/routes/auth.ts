@@ -85,8 +85,8 @@ router.get("/authenticate", async (req, res) => {
       process.env.BCRYPT_SECRET as string
     );
     return res.status(200).json({ message: "Success", data: decoded });
-  } catch (error) {
-    return res.status(500).json({ message: extractErrorMessage(error) });
+  } catch (e) {
+    return res.status(500).json({ message: extractErrorMessage(e) });
   }
 });
 

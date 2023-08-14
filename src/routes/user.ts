@@ -17,8 +17,8 @@ router.get("/", authMiddleware, async (req, res) => {
   try {
     const users = await db("user");
     res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: extractErrorMessage(error) });
+  } catch (e) {
+    res.status(500).json({ message: extractErrorMessage(e) });
   }
 });
 
@@ -33,8 +33,8 @@ router.get("/:id", authMiddleware, async (req, res) => {
   try {
     const users = await db("user").where("id", id);
     res.json(users);
-  } catch (error) {
-    res.status(500).json({ message: extractErrorMessage(error) });
+  } catch (e) {
+    res.status(500).json({ message: extractErrorMessage(e) });
   }
 });
 
@@ -77,8 +77,8 @@ router.post("/", async (req: any, res) => {
     return res
       .status(201)
       .json({ message: "Successfully created new user", data: newUser[0] });
-  } catch (error) {
-    return res.status(500).json({ message: extractErrorMessage(error) });
+  } catch (e) {
+    return res.status(500).json({ message: extractErrorMessage(e) });
   }
 });
 
