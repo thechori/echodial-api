@@ -38,7 +38,7 @@ router.get("/mine", async (req, res) => {
 // Create new Call record
 router.post("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
-  const { from_number, to_number, lead_id } = req.body;
+  const { from_number, to_number, lead_id, twilio_call_sid } = req.body;
 
   if (from_number === null) {
     return res.status(400).json({ message: "Missing `from` field" });
@@ -46,6 +46,8 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ message: "Missing `to` field" });
   } else if (lead_id === null) {
     return res.status(400).json({ message: "Missing `lead_id` field" });
+  } else if (twilio_call_sid === null) {
+    return res.status(400).json({ message: "Missing `twilio_call_sid` field" });
   }
 
   const newCall: Partial<Call> = {
@@ -53,6 +55,7 @@ router.post("/", async (req, res) => {
     lead_id,
     from_number,
     to_number,
+    twilio_call_sid,
   };
 
   try {
@@ -63,7 +66,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// TODO: Prevent Users from editing Calls they did not make
 // Update Call record
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
@@ -74,6 +76,22 @@ router.put("/:id", async (req, res) => {
     const a = await db("call").where("id", id).update(body);
     console.log("a", a);
     return res.status(200).send(a);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+// Update Call record via Twilio Call SID (useful for updates made while Call is active)
+router.put("/twilio-call-sid/:twilio_call_sid", async (req, res) => {
+  const { twilio_call_sid } = req.params;
+  const { body } = req;
+  console.log("body", body);
+
+  try {
+    await db("call").where("twilio_call_sid", twilio_call_sid).update(body);
+    return res.status(200).send({
+      message: `Successfully updated Call with Twilio SID ${twilio_call_sid}`,
+    });
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }

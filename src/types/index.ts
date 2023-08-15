@@ -37,6 +37,8 @@ export type Call = {
   to_number: string;
   was_answered: boolean;
   status: string | null;
+  twilio_call_sid: string;
+  disconnected_at: Date | null;
 };
 
 export type CallerId = {
