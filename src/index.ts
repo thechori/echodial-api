@@ -14,6 +14,7 @@ import dialerRouter from "./routes/dialer";
 import callRouter from "./routes/call";
 import callerIdRouter from "./routes/caller-id";
 import smsRouter from "./routes/sms";
+import metricRouter from "./routes/metric";
 
 const app = express();
 
@@ -34,6 +35,7 @@ app.use("/caller-id", authMiddleware, callerIdRouter);
 app.use("/call", authMiddleware, callRouter);
 app.use("/sms", authMiddleware, smsRouter);
 app.use("/dialer", dialerRouter);
+app.use("/metric", authMiddleware, metricRouter);
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);
