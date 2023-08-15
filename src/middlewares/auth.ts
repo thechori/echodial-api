@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import jwt, { decode } from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 //
 import { RequestHandler } from "express";
 import { extractErrorMessage } from "../utils/error";

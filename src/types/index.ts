@@ -85,6 +85,7 @@ export type Lead = {
   source: string | null;
   created_at: Date;
   updated_at: Date;
+  user_id: number;
 };
 
 export type Phase = {

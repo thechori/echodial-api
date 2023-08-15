@@ -6,11 +6,33 @@ import { authMiddleware } from "../middlewares/auth";
 
 const router = Router();
 
-router.get("/", (req, res) => res.send("ok"));
+// Generate and return the token for Twilio
+router.get("/token", authMiddleware, (req, res) => {
+  res.status(200).send(tokenGenerator(res.locals.jwt_decoded.id));
+});
 
-router.post("/", (req, res) => {
+// Main endpoint for TWimL App which powers the dialer
+router.post("/", async (req, res) => {
+  // Send response immediately
   res.set("Content-Type", "text/xml");
   res.send(voiceResponse(req.body));
+
+  // const { Identity, From, To } = req.body; // Identity is undefined .. need to find another way to do this
+  // Store in DB
+  // try {
+  //   const newCall: Partial<Call> = {
+  //     user_id: Identity, // Set as user_id to obtain information about whose making the call
+  //     from_number: From,
+  //     to_number: To,
+  //     // "lead_id": // TODO: Add this
+  //   };
+  //   const dbResult = await db("call").insert(newCall);
+  //   console.log("dbResult", dbResult);
+
+  //   return res;
+  // } catch (e) {
+  //   console.error(extractErrorMessage(e));
+  // }
 });
 
 function voiceResponse(requestBody: any) {
@@ -37,33 +59,11 @@ function voiceResponse(requestBody: any) {
     // in order to use the appropriate TwiML noun
     const attr = "number";
     dial[attr]({}, toNumberOrClientName);
-
-    // Store in DB
   } else {
     twiml.say("Thanks for calling!");
   }
 
   return twiml.toString();
 }
-
-// router.post("/", (req, res) => {
-//   console.log("req.body", req.body);
-//   const { From, To } = req.body;
-
-//   const response = new VoiceResponse();
-
-//   response
-//     .dial({
-//       callerId: From,
-//     })
-//     .number(To); // also try "client" if this doesn't work
-
-//   res.set("Content-Type", "text/xml");
-//   res.status(200).send(response.toString());
-// });
-
-router.get("/token", authMiddleware, (req, res) => {
-  res.status(200).send(tokenGenerator());
-});
 
 export default router;
