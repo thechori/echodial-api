@@ -53,7 +53,7 @@ function voiceResponse(requestBody: any) {
     // This is an outgoing call
 
     // set the callerId
-    let dial = twiml.dial({ callerId });
+    let dial = twiml.dial({ callerId, answerOnBridge: true });
 
     // Check if the 'To' parameter is a Phone Number or Client Name
     // in order to use the appropriate TwiML noun

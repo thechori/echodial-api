@@ -1,15 +1,8 @@
 import { Router } from "express";
 //
 import db from "../utils/db";
-import twilioClient from "../services/twilio";
 import { extractErrorMessage } from "../utils/error";
-import numbers from "../configs/numbers";
-import { Call, CallerId } from "../types";
-import {
-  isValidPhoneNumberForDb,
-  transformPhoneNumberForDb,
-} from "../utils/validators/phone";
-import twilioConfig from "../configs/twilio";
+import { Call } from "../types";
 
 const router = Router();
 
@@ -50,7 +43,7 @@ router.post("/", async (req, res) => {
     return res.status(400).json({ message: "Missing `twilio_call_sid` field" });
   }
 
-  const newCall: Partial<Call> = {
+  const newCallContent: Partial<Call> = {
     user_id: id,
     lead_id,
     from_number,
@@ -59,8 +52,8 @@ router.post("/", async (req, res) => {
   };
 
   try {
-    const dbResult = await db("call").insert(newCall);
-    return res.status(200).send(dbResult);
+    const newCall = await db("call").insert(newCallContent).returning("*");
+    return res.status(200).send(newCall[0]);
   } catch (e) {
     return res.status(500).json({ message: extractErrorMessage(e) });
   }
@@ -70,12 +63,50 @@ router.post("/", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { body } = req;
-  console.log("body", body);
 
   try {
-    const a = await db("call").where("id", id).update(body);
-    console.log("a", a);
-    return res.status(200).send(a);
+    const updatedCall = await db("call")
+      .where("id", id)
+      .first()
+      .update(body)
+      .returning("*");
+
+    if (updatedCall.length !== 1) {
+      return res
+        .status(400)
+        .send({ message: "An error occurred when trying to update the call" });
+    }
+
+    return res.status(200).send(updatedCall[0]);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+// End a Call
+router.get("/:id/end", async (req, res) => {
+  const { id } = req.params;
+
+  if (id === null) {
+    return res.status(400).send({ message: "Missing `id` field" });
+  }
+
+  try {
+    const endedCall = await db("call")
+      .where("id", id)
+      .update({
+        disconnected_at: new Date(),
+        status: "Ended",
+      })
+      .returning("*");
+
+    if (endedCall.length !== 1) {
+      return res
+        .status(400)
+        .send({ message: "An error occurred when trying to end the call" });
+    }
+
+    return res.status(200).send(endedCall[0]);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
@@ -85,13 +116,21 @@ router.put("/:id", async (req, res) => {
 router.put("/twilio-call-sid/:twilio_call_sid", async (req, res) => {
   const { twilio_call_sid } = req.params;
   const { body } = req;
-  console.log("body", body);
 
   try {
-    await db("call").where("twilio_call_sid", twilio_call_sid).update(body);
-    return res.status(200).send({
-      message: `Successfully updated Call with Twilio SID ${twilio_call_sid}`,
-    });
+    const updatedCall = await db("call")
+      .where("twilio_call_sid", twilio_call_sid)
+      .first()
+      .update(body)
+      .returning("*");
+
+    if (updatedCall.length !== 1) {
+      return res.status(400).send({
+        message: "An error occurred when updating the single call record",
+      });
+    }
+
+    return res.status(200).send(updatedCall[0]);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
@@ -106,8 +145,20 @@ router.delete("/:id", async (req, res) => {
   }
 
   try {
-    const dbResult = await db("caller_id").del().where("id", id);
-    return res.status(200).send(dbResult);
+    const deletedCall = await db("caller_id")
+      .where("id", id)
+      .first()
+      .del()
+      .returning("*");
+
+    if (deletedCall.length !== 1) {
+      return res.status(400).send({
+        message:
+          "An error occurred when trying to delete the single call record",
+      });
+    }
+
+    return res.status(200).send(deletedCall[0]);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }

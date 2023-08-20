@@ -27,8 +27,8 @@ export type Tables = {
 
 export type Call = {
   id: number;
-  user_id: number;
-  lead_id: number;
+  user_id: number | null;
+  lead_id: number | null;
   duration_ms: number | null;
   notes: string | null;
   created_at: Date;
@@ -37,13 +37,13 @@ export type Call = {
   to_number: string;
   was_answered: boolean;
   status: string | null;
-  twilio_call_sid: string;
+  twilio_call_sid: string | null;
   disconnected_at: Date | null;
 };
 
 export type CallerId = {
   id: number;
-  user_id: number;
+  user_id: number | null;
   twilio_sid: string;
   phone_number: string;
   created_at: Date;
@@ -100,8 +100,8 @@ export type Phase = {
 
 export type PhaseLead = {
   id: number;
-  phase_id: number;
-  lead_id: number;
+  phase_id: number | null;
+  lead_id: number | null;
   created_at: Date;
   updated_at: Date;
 };
