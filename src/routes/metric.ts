@@ -82,6 +82,23 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
       .count()
       .first();
 
+    // TODO: Finish this
+    // Average call duration
+    //   const averageCallDurationPreviousPeriodDbResult = await db.raw(`
+    //   SELECT
+    //     avg(disconnected_at - created_at) as average_call_duration
+    //   FROM call
+    //   WHERE user_id = ${id} AND created_at BETWEEN TO_TIMESTAMP(${from}) AND TO_TIMESTAMP(${to})
+    // `);
+
+    // const averageCallDurationPreviousPeriod =
+    //   averageCallDurationPreviousPeriodDbResult &&
+    //   averageCallDurationPreviousPeriodDbResult.rows &&
+    //   averageCallDurationPreviousPeriodDbResult.rows.length
+    //     ? averageCallDurationPreviousPeriodDbResult.rows[0]
+    //         .average_call_duration
+    //     : null;
+
     // Current period
     from = format(today, "yyyy-MM-dd"); // inclusive of lower bound
     to = format(addOperator(today, 1), "yyyy-MM-dd"); // exclusive of upper bound
@@ -113,6 +130,22 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
       .whereBetween("created_at", [from, to])
       .count()
       .first();
+
+    // TODO: Finish this
+    // Average call duration
+    // const averageCallDurationCurrentPeriodDbResult = await db.raw(`
+    //   SELECT
+    //     avg(disconnected_at - created_at) as average_call_duration
+    //   FROM call
+    //   WHERE user_id = ${id} AND created_at BETWEEN TO_TIMESTAMP(${from}) AND TO_TIMESTAMP(${to})
+    // `);
+
+    // const averageCallDurationCurrentPeriod =
+    //   averageCallDurationCurrentPeriodDbResult &&
+    //   averageCallDurationCurrentPeriodDbResult.rows &&
+    //   averageCallDurationCurrentPeriodDbResult.rows.length
+    //     ? averageCallDurationCurrentPeriodDbResult.rows[0].average_call_duration
+    //     : null;
 
     // Return all
     return res.status(200).send({
