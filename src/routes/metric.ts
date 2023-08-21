@@ -76,8 +76,11 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
       .whereBetween("created_at", [from, to])
       .count();
 
+    console.log("leadsCreatedPreviousPeriod", leadsCreatedPreviousPeriod);
+
     // Calls made
     const callsMadePreviousPeriod = await db("call")
+      .select("id", "created_at")
       .where({
         user_id: id,
       })
@@ -125,10 +128,10 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     console.log("from: ", from);
     console.log("to: ", to);
     const callsMadeCurrentPeriod = await db("call")
-      .select("id", "user_id", "created_at")
-      // .where({
-      //   user_id: id,
-      // })
+      .select("id", "created_at")
+      .where({
+        user_id: id,
+      })
       .whereBetween("created_at", [from, to]);
 
     console.log("callsMadeCurrentPeriod", callsMadeCurrentPeriod);
@@ -159,18 +162,22 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     //     : null;
 
     const resObject: TMetrics = {
-      leadsCreatedCountPreviousPeriod:
-        parseInt(leadsCreatedPreviousPeriod[0].count as string) || null,
-      leadsCreatedCountCurrentPeriod:
-        parseInt(leadsCreatedCurrentPeriod[0].count as string) || null,
+      leadsCreatedCountPreviousPeriod: parseInt(
+        leadsCreatedPreviousPeriod[0].count as string
+      ),
+      leadsCreatedCountCurrentPeriod: parseInt(
+        leadsCreatedCurrentPeriod[0].count as string
+      ),
       //
-      callsMadePreviousPeriod: callsMadePreviousPeriod || null,
-      callsMadeCurrentPeriod: callsMadeCurrentPeriod || null,
+      callsMadePreviousPeriod: callsMadePreviousPeriod,
+      callsMadeCurrentPeriod: callsMadeCurrentPeriod,
       //
-      callsAnsweredCountPreviousPeriod:
-        parseInt(callsAnsweredPreviousPeriod[0].count as string) || null,
-      callsAnsweredCountCurrentPeriod:
-        parseInt(callsAnsweredCurrentPeriod[0].count as string) || null,
+      callsAnsweredCountPreviousPeriod: parseInt(
+        callsAnsweredPreviousPeriod[0].count as string
+      ),
+      callsAnsweredCountCurrentPeriod: parseInt(
+        callsAnsweredCurrentPeriod[0].count as string
+      ),
       //
       averageCallDurationInSecondsPreviousPeriod: null,
       averageCallDurationInSecondsCurrentPeriod: null,

@@ -19,6 +19,11 @@ export const transformPhoneNumberForDb = (input: string) => {
   // Remove whitespace
   const trimmedVal = input.trim();
 
+  // Check if it's already a valid value (this is popular when PUTing)
+  if (isValidPhoneNumberForDb(trimmedVal)) {
+    return trimmedVal;
+  }
+
   // Remove non-digit chars (e.g., "-" or " " or "(" or ")")
   const digits = trimmedVal.replace(/\D/g, "");
 

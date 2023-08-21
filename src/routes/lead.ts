@@ -27,10 +27,37 @@ router.get("/", async (req, res) => {
   res.status(200).send(leads);
 });
 
-// Update Lead
+// Get Lead by ID
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+
+  if (id === null || id === undefined) {
+    return res.status(400).send("Missing `id` parameter");
+  }
+
+  const leads = await db("lead").where({
+    id,
+  });
+
+  if (leads.length !== 1) {
+    return res.status(400).send({
+      message:
+        "There was an issue fetching the single Lead. Check the ID and try again",
+    });
+  }
+
+  res.status(200).send(leads[0]);
+});
+
+// Update Lead (entirely via PUT)
 router.put("/:id", async (req, res) => {
   const { id } = req.params;
   const { body } = req;
+  const { phone } = body;
+
+  if (!phone) {
+    return res.status(400).send({ message: "Missing `phone` field" });
+  }
 
   // Validate phone
   const phoneNumberForDb = transformPhoneNumberForDb(body.phone);
@@ -40,15 +67,57 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
-    const rowsAffected = await db("lead")
+    const updatedLeads = await db("lead")
       .where("id", id)
       .update({
         ...body,
         phone: phoneNumberForDb,
+      })
+      .returning("*");
+
+    if (updatedLeads.length !== 1) {
+      return res.status(400).send({
+        message:
+          "An issue occurred when attempting to update the single Lead entry. Check the ID and try again",
       });
-    return res
-      .status(200)
-      .json({ message: `Successfully updated lead`, data: rowsAffected });
+    }
+
+    return res.status(200).send(updatedLeads[0]);
+  } catch (e) {
+    return res.status(500).send(extractErrorMessage(e));
+  }
+});
+
+// Update Lead (partial update via PATCH)
+router.patch("/:id", async (req, res) => {
+  const { id } = req.params;
+  const { body } = req;
+  const { phone } = body;
+
+  // IF phone is changed, validate it
+  if (phone) {
+    // Validate phone
+    const phoneNumberForDb = transformPhoneNumberForDb(body.phone);
+
+    if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
+      return res.status(400).send("Phone number is not valid");
+    }
+  }
+
+  try {
+    const updatedLeads = await db("lead")
+      .where("id", id)
+      .update(body)
+      .returning("*");
+
+    if (updatedLeads.length !== 1) {
+      return res.status(400).send({
+        message:
+          "The single lead was not updated properly. Check the ID parameter and try again",
+      });
+    }
+
+    return res.status(200).json(updatedLeads[0]);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }

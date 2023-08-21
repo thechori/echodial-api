@@ -88,6 +88,7 @@ export type Lead = {
   created_at: Date;
   updated_at: Date;
   user_id: number;
+  call_count: number;
 };
 
 export type Phase = {
