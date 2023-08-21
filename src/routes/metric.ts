@@ -1,19 +1,30 @@
 import { Router } from "express";
-//
-import { extractErrorMessage } from "../utils/error";
-import db from "../utils/db";
 import {
-  format,
   addDays,
   subDays,
   addWeeks,
   subWeeks,
   addMonths,
   subMonths,
+  startOfDay,
 } from "date-fns";
+//
+import { extractErrorMessage } from "../utils/error";
+import db from "../utils/db";
+import { Call } from "../types";
 
 const router = Router();
 
+export type TMetrics = {
+  leadsCreatedCountPreviousPeriod: number | null;
+  leadsCreatedCountCurrentPeriod: number | null;
+  callsMadePreviousPeriod: Call[];
+  callsMadeCurrentPeriod: Call[];
+  callsAnsweredCountPreviousPeriod: number | null;
+  callsAnsweredCountCurrentPeriod: number | null;
+  averageCallDurationInSecondsPreviousPeriod: number | null;
+  averageCallDurationInSecondsCurrentPeriod: number | null;
+};
 export type TMetricResolution = "day" | "week" | "month";
 const validMetricResolutions = ["day", "week", "month"];
 
@@ -33,7 +44,8 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
 
   try {
     // Store reference of today's date
-    const today = new Date();
+    const now = new Date();
+    const today = startOfDay(now);
 
     // Determine which date operators to use based on resolution
     const subOperator =
@@ -51,8 +63,10 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
 
     // Previous period
     // Generate date range: E.g., (from: today, to: tomorrow) = today
-    let from = format(subOperator(today, 1), "yyyy-MM-dd"); // exclusive of upper bound
-    let to = format(today, "yyyy-MM-dd"); // inclusive of lower bound
+    // let from = format(subOperator(today, 1), "yyyy-MM-dd"); // exclusive of upper bound
+    // let to = format(today, "yyyy-MM-dd"); // inclusive of lower bound
+    let from = subOperator(today, 1); // today at 00:00:00
+    let to = today; // tomorrow at 00:00:00
 
     // Leads
     const leadsCreatedPreviousPeriod = await db("lead")
@@ -60,17 +74,14 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
         user_id: id,
       })
       .whereBetween("created_at", [from, to])
-      .count()
-      .first();
+      .count();
 
     // Calls made
     const callsMadePreviousPeriod = await db("call")
       .where({
         user_id: id,
       })
-      .whereBetween("created_at", [from, to])
-      .count()
-      .first();
+      .whereBetween("created_at", [from, to]);
 
     // Calls answered
     const callsAnsweredPreviousPeriod = await db("call")
@@ -79,8 +90,7 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
         was_answered: true,
       })
       .whereBetween("created_at", [from, to])
-      .count()
-      .first();
+      .count();
 
     // TODO: Finish this
     // Average call duration
@@ -100,8 +110,8 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     //     : null;
 
     // Current period
-    from = format(today, "yyyy-MM-dd"); // inclusive of lower bound
-    to = format(addOperator(today, 1), "yyyy-MM-dd"); // exclusive of upper bound
+    from = today; // inclusive of lower bound
+    to = addOperator(today, 1); // exclusive of upper bound
 
     // Leads
     const leadsCreatedCurrentPeriod = await db("lead")
@@ -109,17 +119,19 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
         user_id: id,
       })
       .whereBetween("created_at", [from, to])
-      .count()
-      .first();
+      .count();
 
     // Calls made
+    console.log("from: ", from);
+    console.log("to: ", to);
     const callsMadeCurrentPeriod = await db("call")
-      .where({
-        user_id: id,
-      })
-      .whereBetween("created_at", [from, to])
-      .count()
-      .first();
+      .select("id", "user_id", "created_at")
+      // .where({
+      //   user_id: id,
+      // })
+      .whereBetween("created_at", [from, to]);
+
+    console.log("callsMadeCurrentPeriod", callsMadeCurrentPeriod);
 
     // Calls answered
     const callsAnsweredCurrentPeriod = await db("call")
@@ -128,8 +140,7 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
         was_answered: true,
       })
       .whereBetween("created_at", [from, to])
-      .count()
-      .first();
+      .count();
 
     // TODO: Finish this
     // Average call duration
@@ -147,20 +158,26 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     //     ? averageCallDurationCurrentPeriodDbResult.rows[0].average_call_duration
     //     : null;
 
+    const resObject: TMetrics = {
+      leadsCreatedCountPreviousPeriod:
+        parseInt(leadsCreatedPreviousPeriod[0].count as string) || null,
+      leadsCreatedCountCurrentPeriod:
+        parseInt(leadsCreatedCurrentPeriod[0].count as string) || null,
+      //
+      callsMadePreviousPeriod: callsMadePreviousPeriod || null,
+      callsMadeCurrentPeriod: callsMadeCurrentPeriod || null,
+      //
+      callsAnsweredCountPreviousPeriod:
+        parseInt(callsAnsweredPreviousPeriod[0].count as string) || null,
+      callsAnsweredCountCurrentPeriod:
+        parseInt(callsAnsweredCurrentPeriod[0].count as string) || null,
+      //
+      averageCallDurationInSecondsPreviousPeriod: null,
+      averageCallDurationInSecondsCurrentPeriod: null,
+    };
+
     // Return all
-    return res.status(200).send({
-      leadsCreatedPreviousPeriod: leadsCreatedPreviousPeriod?.count || null,
-      leadsCreatedCurrentPeriod: leadsCreatedCurrentPeriod?.count || null,
-      //
-      callsMadePreviousPeriod: callsMadePreviousPeriod?.count || null,
-      callsMadeCurrentPeriod: callsMadeCurrentPeriod?.count || null,
-      //
-      callsAnsweredPreviousPeriod: callsAnsweredPreviousPeriod?.count || null,
-      callsAnsweredCurrentPeriod: callsAnsweredCurrentPeriod?.count || null,
-      //
-      averageCallDurationPreviousPeriod: null,
-      averageCallDurationCurrentPeriod: null,
-    });
+    return res.status(200).send(resObject);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
   }
