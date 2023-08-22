@@ -53,6 +53,16 @@ router.post("/", async (req, res) => {
 
   try {
     const newCall = await db("call").insert(newCallContent).returning("*");
+
+    if (newCall.length !== 1) {
+      return res.status(400).send({
+        message: "An error occurred when creating a single new Call record",
+      });
+    }
+
+    // Increment call_count for Lead
+    await db("lead").where({ id: lead_id }).increment("call_count", 1);
+
     return res.status(200).send(newCall[0]);
   } catch (e) {
     return res.status(500).json({ message: extractErrorMessage(e) });
