@@ -78,6 +78,20 @@ router.post("/", async (req: any, res) => {
       .status(201)
       .json({ message: "Successfully created new user", data: newUser[0] });
   } catch (e) {
+    // Safely check for `code` in error object
+    if (e !== null && typeof e === "object" && "code" in e && "message" in e) {
+      console.log("e.code: ", e.code);
+
+      let errorMessage = `Error ${e.code}: ${e.message}`;
+
+      // Email already exists
+      if (e.code === "23505") {
+        errorMessage = "This email address is already registered";
+      }
+
+      return res.status(400).send({ message: errorMessage });
+    }
+
     return res.status(500).json({ message: extractErrorMessage(e) });
   }
 });
