@@ -28,13 +28,14 @@ export const authMiddleware: RequestHandler = async (req, res, next) => {
     // Continue
     return next();
   } catch (e) {
+    console.error("ERROR!!", e);
     const errorMessage = extractErrorMessage(e);
 
     // Handle expired token error
     if (errorMessage === "jwt expired") {
-      return res.status(401).send("JWT expired");
+      return res.status(401).send({ message: "JWT expired" });
     }
 
-    return res.status(500).send(errorMessage);
+    return res.status(500).send({ message: errorMessage });
   }
 };
