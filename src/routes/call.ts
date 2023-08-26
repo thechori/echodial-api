@@ -6,22 +6,13 @@ import { Call } from "../types";
 
 const router = Router();
 
-// Return all Calls
-router.get("/", async (req, res) => {
-  try {
-    const calls = await db("call");
-    return res.status(200).send(calls);
-  } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
-  }
-});
-
 // Return user-owned Calls
-router.get("/mine", async (req, res) => {
+router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
 
   try {
     const calls = await db("call").where("user_id", id);
+    console.log("calls", calls);
     return res.status(200).send(calls);
   } catch (e) {
     return res.status(500).send(extractErrorMessage(e));
