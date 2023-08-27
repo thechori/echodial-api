@@ -45,7 +45,7 @@ router.get("/", async (req, res) => {
     const caller_ids = await db("caller_id").where("user_id", id);
     return res.status(200).send(caller_ids);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -84,7 +84,7 @@ router.post("/", async (req, res) => {
       messagingServiceSid: twilioConfig.messagingServiceSid,
     });
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 
   if (!validationRequest)
@@ -156,7 +156,7 @@ router.post("/delete", async (req, res) => {
     const dbResult = await db("caller_id").del().where("id", id);
     return res.status(200).send(dbResult);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 

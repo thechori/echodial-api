@@ -10,7 +10,7 @@ router.get("/", async (req: Request, res: Response) => {
     const persons = await db("person");
     return res.status(200).send(persons);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 

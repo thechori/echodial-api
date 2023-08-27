@@ -186,7 +186,7 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     // Return all
     return res.status(200).send(resObject);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 

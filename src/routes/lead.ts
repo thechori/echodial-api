@@ -84,7 +84,7 @@ router.put("/:id", async (req, res) => {
 
     return res.status(200).send(updatedLeads[0]);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -119,7 +119,7 @@ router.patch("/:id", async (req, res) => {
 
     return res.status(200).json(updatedLeads[0]);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -135,7 +135,7 @@ router.delete("/:id", async (req, res) => {
     const deletionResult = await db("lead").del().where("id", id);
     return res.status(200).send(deletionResult);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -154,7 +154,7 @@ router.post("/bulk-delete", async (req, res) => {
       data: rowsDeletedCount,
     });
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -186,7 +186,7 @@ router.post("/", async (req, res) => {
 
     return res.status(200).send(newLead);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 

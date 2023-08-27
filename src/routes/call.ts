@@ -15,7 +15,7 @@ router.get("/", async (req, res) => {
     console.log("calls", calls);
     return res.status(200).send(calls);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -80,7 +80,7 @@ router.put("/:id", async (req, res) => {
 
     return res.status(200).send(updatedCall[0]);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -109,7 +109,7 @@ router.get("/:id/end", async (req, res) => {
 
     return res.status(200).send(endedCall[0]);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -133,7 +133,7 @@ router.put("/twilio-call-sid/:twilio_call_sid", async (req, res) => {
 
     return res.status(200).send(updatedCall[0]);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -161,7 +161,7 @@ router.delete("/:id", async (req, res) => {
 
     return res.status(200).send(deletedCall[0]);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 

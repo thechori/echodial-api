@@ -11,7 +11,7 @@ router.get("/", async (req: Request, res: Response) => {
     const campaigns = await db("campaign");
     return res.status(200).send(campaigns);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 
@@ -30,7 +30,7 @@ router.get("/pretty", async (req: Request, res: Response) => {
 
     return res.status(200).send(campaigns);
   } catch (e) {
-    return res.status(500).send(extractErrorMessage(e));
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 

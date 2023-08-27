@@ -1,4 +1,4 @@
-import { Router, request } from "express";
+import { Router } from "express";
 import VoiceResponse from "twilio/lib/twiml/VoiceResponse";
 //
 import tokenGenerator from "../utils/twilio/token-generator";
