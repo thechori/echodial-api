@@ -72,6 +72,7 @@ router.put("/:id", async (req, res) => {
       .update({
         ...body,
         phone: phoneNumberForDb,
+        updated_at: new Date().toISOString(), // Note: manually doing this because knex does not support it
       })
       .returning("*");
 

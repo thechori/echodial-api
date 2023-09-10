@@ -11,3 +11,4 @@ This is a project
 - To create a new migration file: `knex migrate:make {name}`
 - To run migrations (to latest): `knex migrate:latest --env [ENV]`
 - We must drop foreign keys before we alter them -- this was the case in the migration for updating the `.onDelete` action for the different columns. Simply altering the columns resulted in an error, but running `table.dropForeign("user_id")` first allowed this action to continue
+- Found out knex does not actually support the timestamps functionality for `updated_at` ... so we have to do this manually. See `src/routes/leads.ts` within the PUT handler

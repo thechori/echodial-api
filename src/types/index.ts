@@ -94,6 +94,7 @@ export type Lead = {
   sale_cost: number | null;
   sale_notes: string | null;
   sale_at: Date | null;
+  notes: string | null;
 };
 
 export type Phase = {
