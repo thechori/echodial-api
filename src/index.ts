@@ -24,7 +24,7 @@ app.use(cors());
 app.use(morgan("common"));
 
 app.get("/", (req: Request, res: Response) => {
-  res.send("l34ds");
+  res.send("EchoDial");
 });
 
 app.use("/auth", authRouter);
