@@ -2,27 +2,58 @@
 // Do not touch them, or risk, your modifications being lost.
 
 export enum Table {
+  Bucket = "bucket",
+  BucketLead = "bucket_lead",
   Call = "call",
   CallerId = "caller_id",
   IncomingNumber = "incoming_number",
   KnexMigrations = "knex_migrations",
   KnexMigrationsLock = "knex_migrations_lock",
   Lead = "lead",
-  Phase = "phase",
-  PhaseLead = "phase_lead",
   User = "user",
 }
 
 export type Tables = {
+  "bucket": Bucket,
+  "bucket_lead": BucketLead,
   "call": Call,
   "caller_id": CallerId,
   "incoming_number": IncomingNumber,
   "knex_migrations": KnexMigrations,
   "knex_migrations_lock": KnexMigrationsLock,
   "lead": Lead,
-  "phase": Phase,
-  "phase_lead": PhaseLead,
   "user": User,
+};
+
+export type Bucket = {
+  id: number;
+  user_id: number;
+  name: string;
+  description: string;
+  min_call_count: number | null;
+  max_call_count: number | null;
+  min_answer_count: number | null;
+  max_answer_count: number | null;
+  min_interest_level: number | null;
+  max_interest_level: number | null;
+  has_appointment: boolean | null;
+  requests_follow_up: boolean | null;
+  not_interested: boolean | null;
+  sold: boolean | null;
+  archived: boolean | null;
+  created_before: Date | null;
+  created_after: Date | null;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type BucketLead = {
+  id: number;
+  bucket_id: number;
+  lead_id: number;
+  bucket_id_manually_assigned: number | null;
+  created_at: Date;
+  updated_at: Date;
 };
 
 export type Call = {
@@ -95,22 +126,11 @@ export type Lead = {
   sale_notes: string | null;
   sale_at: Date | null;
   notes: string | null;
-};
-
-export type Phase = {
-  id: number;
-  name: string;
-  description: string;
-  created_at: Date;
-  updated_at: Date;
-};
-
-export type PhaseLead = {
-  id: number;
-  phase_id: number | null;
-  lead_id: number | null;
-  created_at: Date;
-  updated_at: Date;
+  answer_count: number | null;
+  interest_level: number | null;
+  appointment_at: Date | null;
+  not_interested_reason: string | null;
+  archived_at: Date | null;
 };
 
 export type User = {

@@ -108,7 +108,10 @@ router.patch("/:id", async (req, res) => {
   try {
     const updatedLeads = await db("lead")
       .where("id", id)
-      .update(body)
+      .update({
+        ...body,
+        updated_at: new Date().toISOString(), // Note: manually doing this because knex does not support it
+      })
       .returning("*");
 
     if (updatedLeads.length !== 1) {

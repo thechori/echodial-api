@@ -69,7 +69,10 @@ router.put("/:id", async (req, res) => {
     const updatedCall = await db("call")
       .where("id", id)
       .first()
-      .update(body)
+      .update({
+        ...body,
+        updated_at: new Date().toISOString(), // Note: manually doing this because knex does not support it
+      })
       .returning("*");
 
     if (updatedCall.length !== 1) {
@@ -122,7 +125,10 @@ router.put("/twilio-call-sid/:twilio_call_sid", async (req, res) => {
     const updatedCall = await db("call")
       .where("twilio_call_sid", twilio_call_sid)
       .first()
-      .update(body)
+      .update({
+        ...body,
+        updated_at: new Date().toISOString(), // Note: manually doing this because knex does not support it
+      })
       .returning("*");
 
     if (updatedCall.length !== 1) {
@@ -146,7 +152,7 @@ router.delete("/:id", async (req, res) => {
   }
 
   try {
-    const deletedCall = await db("caller_id")
+    const deletedCall = await db("call")
       .where("id", id)
       .first()
       .del()

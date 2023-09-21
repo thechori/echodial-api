@@ -15,6 +15,7 @@ import callRouter from "./routes/call";
 import callerIdRouter from "./routes/caller-id";
 import smsRouter from "./routes/sms";
 import metricRouter from "./routes/metric";
+import bucketRouter from "./routes/bucket";
 
 const app = express();
 
@@ -31,11 +32,13 @@ app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/session", authMiddleware, sessionRouter);
 app.use("/lead", authMiddleware, leadRouter);
+app.use("/lead", authMiddleware, leadRouter);
 app.use("/caller-id", authMiddleware, callerIdRouter);
 app.use("/call", authMiddleware, callRouter);
 app.use("/sms", authMiddleware, smsRouter);
 app.use("/dialer", dialerRouter);
 app.use("/metric", authMiddleware, metricRouter);
+app.use("/bucket", authMiddleware, bucketRouter);
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);
