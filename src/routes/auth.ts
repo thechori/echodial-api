@@ -6,8 +6,11 @@ import bcrypt from "bcrypt";
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
 import { authMiddleware } from "../middlewares/auth";
+import { sesClient } from "../services/ses-client";
+import { createSendEmailCommand } from "../utils/email";
 
 dotenv.config();
+
 const router = Router();
 
 // Endpoint is mostly for capturing user behavior, the heavy work is done on the client when they clear the local storage item
@@ -87,6 +90,74 @@ router.get("/authenticate", async (req, res) => {
     return res.status(200).json({ message: "Success", data: decoded });
   } catch (e) {
     return res.status(500).json({ message: extractErrorMessage(e) });
+  }
+});
+
+// Request password reset
+// This endpoint is used whenever a user forgets their password and need to have
+// an email sent for them to click and verify that they own it (before we properly
+// let them reset the password, to avoid fraud)
+router.post("/reset-password-request", async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(403).json({ message: "Email is missing" });
+  }
+
+  // Send a success 200 response -- we don't need to inform the user if the email is found
+  // or not because this could give away precious information about our database
+  res.status(200).send();
+
+  // Cleanse email input (lowercase/trim)
+  const emailClean = email.trim().toLowerCase();
+
+  try {
+    // Look up email in DB
+    const user = await db("user").where("email", emailClean).first();
+
+    // User not found
+    if (!user) {
+      return console.info("No email found with email: ", emailClean);
+    }
+
+    // Create a token that lasts for 24hr
+    // TODO
+
+    // Create command
+    const sendEmailCommand = createSendEmailCommand({
+      toAddresses: [emailClean],
+      fromAddress: "support@echodial.com",
+      subject: "Password reset request",
+      bodyHtml: `
+      <html>
+        <body>
+          <style>
+            /* TODO: figure out how to make this work */
+            .hover:hover {
+              color: red;
+            }
+            .purple {
+              color: purple;
+            }
+          </style>
+          <div>
+            <div>
+              <img src="https://echodial.com/assets/EchoDial-temp-logo-full-dark-6e151d63.png" alt="EchoDial logo" width="240" />
+            </div>
+            <h2 style="color: #0074ff;">Change your password</h2>
+            <p class="purple">We have received a request to reset the password for your EchoDial account (email).</p>
+            <p>If this was not you, ignore this email and your password will not be changed. The link below will remain active for 24 hours.</p>
+            <button class="hover" style="font-size: 1rem; background-color: #0074ff; color: white; border: none; border-radius: 3px; padding: 0.5rem 1rem;">Reset password</button>
+          </div>
+        </body>
+      </html>
+      `,
+    });
+
+    // Send email
+    await sesClient.send(sendEmailCommand);
+  } catch (e) {
+    return console.error(extractErrorMessage(e));
   }
 });
 

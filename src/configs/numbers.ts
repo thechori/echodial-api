@@ -1,7 +1,7 @@
 const numbers = {
   mine: "+18326460869",
 
-  l34dsSmsSender: "+12812068992",
+  echoDialSmsSender: "+12812068992",
 
   friendswood: "+12813178765",
 
