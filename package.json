@@ -11,7 +11,7 @@
     "db:migrate:latest:dev": "knex migrate:latest --env development",
     "generate-types:dev": "NODE_ENV=development ts-node scripts/generate-types-from-db.ts"
   },
-  "author": "Teodoro Systems LLC",
+  "author": "EchoDial LLC",
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-ses": "^3.425.0",

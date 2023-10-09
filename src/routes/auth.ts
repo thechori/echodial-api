@@ -2,12 +2,15 @@ import { Request, Response, Router } from "express";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import crypto from "crypto";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
 import { authMiddleware } from "../middlewares/auth";
 import { sesClient } from "../services/ses-client";
 import { createSendEmailCommand } from "../utils/email";
+import envConfig from "../configs/env";
+import { PasswordResetToken } from "../types";
 
 dotenv.config();
 
@@ -120,8 +123,38 @@ router.post("/reset-password-request", async (req, res) => {
       return console.info("No email found with email: ", emailClean);
     }
 
-    // Create a token that lasts for 24hr
-    // TODO
+    // Check for existing token
+    const existingPasswordResetToken = await db("password_reset_token")
+      .where("email", emailClean)
+      .first();
+    console.log("existingPasswordResetToken: ", existingPasswordResetToken);
+
+    if (existingPasswordResetToken) {
+      // Delete if found
+      const deletedToken = await db("password_reset_token")
+        .del()
+        .where("id", existingPasswordResetToken.id);
+      console.log("deletedToken", deletedToken);
+    }
+
+    // Create a token
+    const token = crypto.randomBytes(32).toString("hex");
+    const newPasswordResetTokenContent: Partial<PasswordResetToken> = {
+      user_id: user.id,
+      token,
+    };
+
+    // Insert into database
+    const newPasswordResetToken = await db("password_reset_token")
+      .insert(newPasswordResetTokenContent)
+      .returning("*");
+
+    // Handle errors
+    if (newPasswordResetToken.length !== 1) {
+      return console.error(
+        "An error occurred when creating a single new PasswordResetToken record"
+      );
+    }
 
     // Create command
     const sendEmailCommand = createSendEmailCommand({
@@ -146,8 +179,8 @@ router.post("/reset-password-request", async (req, res) => {
             </div>
             <h2 style="color: #0074ff;">Change your password</h2>
             <p class="purple">We have received a request to reset the password for your EchoDial account (email).</p>
-            <p>If this was not you, ignore this email and your password will not be changed. The link below will remain active for 24 hours.</p>
-            <button class="hover" style="font-size: 1rem; background-color: #0074ff; color: white; border: none; border-radius: 3px; padding: 0.5rem 1rem;">Reset password</button>
+            <p>If this was not you, ignore this email and your password will not be changed. The link below will remain active for 1 hour.</p>
+            <a class="hover" href="${envConfig.clientHost}/reset-password/${token}" style="font-size: 1rem; background-color: #0074ff; color: white; border: none; border-radius: 3px; padding: 0.5rem 1rem;">Reset password</a>
           </div>
         </body>
       </html>
@@ -158,6 +191,57 @@ router.post("/reset-password-request", async (req, res) => {
     await sesClient.send(sendEmailCommand);
   } catch (e) {
     return console.error(extractErrorMessage(e));
+  }
+});
+
+// Pass token to endpoint to be returned the email for UI
+router.get("/reset-password-token/:token", async (req, res) => {
+  const { token } = req.params;
+
+  // Check for missing field
+  if (!token) {
+    return res.status(400).send({ message: "Missing `token` field" });
+  }
+
+  const passwordResetToken = await db("password_reset_token")
+    .where("token", token)
+    .first();
+
+  // Handle error
+  if (!passwordResetToken) {
+    return res.status(400).send({
+      message: "An error occurred when fetching the password reset token",
+    });
+  }
+
+  // Look up user via id to fetch email
+  const user = await db("user").where("id", passwordResetToken.user_id).first();
+
+  if (!user) {
+    return res.status(400).send({
+      message:
+        "An error occurred when fetching the user associated with the password reset token",
+    });
+  }
+
+  return res.status(200).send(user.email);
+});
+
+// Pass in token and new password -> update user password
+router.post("/reset-password", async (req, res) => {
+  const { token, password } = req.body;
+
+  // Check for missing fields
+  if (!token || !password) {
+    return res
+      .status(400)
+      .send({ message: "Missing `token` or `password` field" });
+  }
+
+  try {
+    // Find token
+  } catch (e) {
+    return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
 

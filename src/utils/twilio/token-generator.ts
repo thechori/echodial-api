@@ -1,21 +1,21 @@
 import AccessToken, { VoiceGrant } from "twilio/lib/jwt/AccessToken";
 //
-import twilioConfig from "../../configs/twilio";
+import envConfig from "../../configs/env";
 
 function tokenGenerator(user_id: number) {
   const user_id_string = user_id.toString();
 
   const accessToken = new AccessToken(
-    twilioConfig.accountSid,
-    twilioConfig.apiKey,
-    twilioConfig.apiSecret,
+    envConfig.accountSid,
+    envConfig.apiKey,
+    envConfig.apiSecret,
     {
       identity: user_id_string,
     }
   );
 
   const grant = new VoiceGrant({
-    outgoingApplicationSid: twilioConfig.twimlAppSid,
+    outgoingApplicationSid: envConfig.twimlAppSid,
     incomingAllow: true,
   });
   accessToken.addGrant(grant);

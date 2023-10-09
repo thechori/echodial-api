@@ -9,7 +9,7 @@ import {
   isValidPhoneNumberForDb,
   transformPhoneNumberForDb,
 } from "../utils/validators/phone";
-import twilioConfig from "../configs/twilio";
+import envConfig from "../configs/env";
 
 const router = Router();
 
@@ -81,7 +81,7 @@ router.post("/", async (req, res) => {
       body: `Validation code: ${validationRequest.validationCode}`,
       from: numbers.echoDialSmsSender,
       to: phoneNumberForDb,
-      messagingServiceSid: twilioConfig.messagingServiceSid,
+      messagingServiceSid: envConfig.messagingServiceSid,
     });
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
