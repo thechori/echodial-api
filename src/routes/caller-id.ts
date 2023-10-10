@@ -9,7 +9,7 @@ import {
   isValidPhoneNumberForDb,
   transformPhoneNumberForDb,
 } from "../utils/validators/phone";
-import twilioConfig from "../configs/twilio";
+import envConfig from "../configs/env";
 
 const router = Router();
 
@@ -79,9 +79,9 @@ router.post("/", async (req, res) => {
     );
     twilioClient.messages.create({
       body: `Validation code: ${validationRequest.validationCode}`,
-      from: numbers.l34dsSmsSender,
+      from: numbers.echoDialSmsSender,
       to: phoneNumberForDb,
-      messagingServiceSid: twilioConfig.messagingServiceSid,
+      messagingServiceSid: envConfig.messagingServiceSid,
     });
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
@@ -151,7 +151,7 @@ router.post("/delete", async (req, res) => {
     }
   }
 
-  // Delete L34DS Caller ID
+  // Delete EchoDial Caller ID
   try {
     const dbResult = await db("caller_id").del().where("id", id);
     return res.status(200).send(dbResult);

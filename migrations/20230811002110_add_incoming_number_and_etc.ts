@@ -11,7 +11,7 @@ export async function up(knex: Knex): Promise<void> {
         .unsigned()
         .references("id")
         .inTable("user");
-      // .notNullable(); // Allowing null, this will indicate it belongs to L34DS for misc purposes
+      // .notNullable(); // Allowing null, this will indicate it belongs to EchoDial for misc purposes
       table.string("friendly_name", 255); // SMS Alert Line
       table.string("description", 255); // This number is used to send SMS alerts to users
       //

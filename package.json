@@ -1,7 +1,7 @@
 {
-  "name": "l34ds",
+  "name": "echodial-api",
   "version": "1.0.0",
-  "description": "Automated lead identifying machine",
+  "description": "EchoDial API built using Node.js and Express",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --watch './**/*.ts' --exec 'ts-node' src/index.ts",
@@ -11,9 +11,10 @@
     "db:migrate:latest:dev": "knex migrate:latest --env development",
     "generate-types:dev": "NODE_ENV=development ts-node scripts/generate-types-from-db.ts"
   },
-  "author": "Teodoro Systems LLC",
+  "author": "EchoDial LLC",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.425.0",
     "@types/multer": "^1.4.7",
     "bcrypt": "^5.1.0",
     "body-parser": "^1.20.2",

@@ -2,7 +2,10 @@ require("dotenv").config();
 
 import numbers from "./numbers";
 
-const twilioConfig = {
+// Init object
+const envConfig = {
+  port: "",
+  clientHost: "",
   accountSid: "",
   authToken: "",
   twimlAppSid: "",
@@ -12,8 +15,10 @@ const twilioConfig = {
   messagingServiceSid: "",
 };
 
+// Extract from runtime environment
 const {
   PORT,
+  CLIENT_HOST,
   TWILIO_SID,
   TWILIO_TWIML_APP_SID,
   TWILIO_API_KEY,
@@ -22,7 +27,9 @@ const {
   TWILIO_MESSAGING_SERVICE_SID,
 } = process.env;
 
+// Handle missing values
 if (
+  !CLIENT_HOST ||
   !PORT ||
   !TWILIO_SID ||
   !TWILIO_TWIML_APP_SID ||
@@ -34,21 +41,25 @@ if (
   throw "missing field from .env file";
 }
 
+// Assignments
+envConfig.clientHost = CLIENT_HOST;
+envConfig.port = PORT;
+
 // Your Twilio account SID and auth token, both found at:
 // https://www.twilio.com/user/account
 //
 // A good practice is to store these string values as system environment
 // variables, and load them from there as we are doing below. Alternately,
 // you could hard code these values here as strings.
-twilioConfig.accountSid = TWILIO_SID;
-twilioConfig.authToken = TWILIO_AUTH_TOKEN;
+envConfig.accountSid = TWILIO_SID;
+envConfig.authToken = TWILIO_AUTH_TOKEN;
 
-twilioConfig.twimlAppSid = TWILIO_TWIML_APP_SID;
-twilioConfig.callerId = numbers.l34dsSmsSender; // FROM number
-twilioConfig.messagingServiceSid = TWILIO_MESSAGING_SERVICE_SID; // FROM number
+envConfig.twimlAppSid = TWILIO_TWIML_APP_SID;
+envConfig.callerId = numbers.echoDialSmsSender; // FROM number
+envConfig.messagingServiceSid = TWILIO_MESSAGING_SERVICE_SID; // FROM number
 
-twilioConfig.apiKey = TWILIO_API_KEY;
-twilioConfig.apiSecret = TWILIO_API_SECRET;
+envConfig.apiKey = TWILIO_API_KEY;
+envConfig.apiSecret = TWILIO_API_SECRET;
 
 // Export configuration object
-export default twilioConfig;
+export default envConfig;

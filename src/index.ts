@@ -42,5 +42,5 @@ app.use("/bucket", authMiddleware, bucketRouter);
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);
-  console.log(`L34ds on port ${process.env.PORT}`);
+  console.log(`EchoDial on port ${process.env.PORT}`);
 });
