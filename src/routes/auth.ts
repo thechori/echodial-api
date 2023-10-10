@@ -11,6 +11,7 @@ import { sesClient } from "../services/ses-client";
 import { createSendEmailCommand } from "../utils/email";
 import envConfig from "../configs/env";
 import { PasswordResetToken } from "../types";
+import { saltRounds } from "../configs/auth";
 
 dotenv.config();
 
@@ -125,7 +126,7 @@ router.post("/reset-password-request", async (req, res) => {
 
     // Check for existing token
     const existingPasswordResetToken = await db("password_reset_token")
-      .where("email", emailClean)
+      .where("user_id", user.id)
       .first();
     console.log("existingPasswordResetToken: ", existingPasswordResetToken);
 
@@ -227,19 +228,68 @@ router.get("/reset-password-token/:token", async (req, res) => {
   return res.status(200).send(user.email);
 });
 
-// Pass in token and new password -> update user password
+// Pass in token, email, and new password -> update user password
 router.post("/reset-password", async (req, res) => {
-  const { token, password } = req.body;
+  const { token, password, email } = req.body;
 
   // Check for missing fields
-  if (!token || !password) {
+  if (!token || !password || !email) {
     return res
       .status(400)
-      .send({ message: "Missing `token` or `password` field" });
+      .send({ message: "Missing `token` or `password` or `email` field" });
+  }
+
+  // Validate password
+  if (password.length < 6) {
+    return res
+      .status(400)
+      .send({ message: "Password must be at least 6 characters long" });
   }
 
   try {
     // Find token
+    const foundToken = await db("password_reset_token")
+      .where("token", token)
+      .first();
+
+    // Handle error
+    if (!foundToken) {
+      return res.status(400).send({
+        message: "No password reset token found",
+      });
+    }
+
+    // Hash password before inserting to DB
+    const passwordHash = await bcrypt.hash(password, saltRounds);
+
+    // Update user optimistically, we're assuming the email passed in is valid if the token is valid
+    const updatedUser = await db("user")
+      .where("email", email)
+      .update({
+        password_hash: passwordHash,
+      })
+      .returning("*");
+
+    // Handle error
+    if (!updatedUser) {
+      return res.status(400).send({
+        message: "No user found",
+      });
+    }
+
+    // Delete the ResetPasswordToken
+    const deletedToken = await db("password_reset_token")
+      .del()
+      .where("id", foundToken.id);
+
+    // Handle error
+    if (!deletedToken) {
+      return res.status(400).send({
+        message: "Error deleting password reset token",
+      });
+    }
+
+    return res.status(200).send();
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
   }
