@@ -198,7 +198,6 @@ router.post("/reset-password-request", async (req, res) => {
 // Pass token to endpoint to be returned the email for UI
 router.get("/reset-password-token/:token", async (req, res) => {
   const { token } = req.params;
-
   // Check for missing field
   if (!token) {
     return res.status(400).send({ message: "Missing `token` field" });
@@ -213,7 +212,27 @@ router.get("/reset-password-token/:token", async (req, res) => {
     return res.status(400).send({
       message: "An error occurred when fetching the password reset token",
     });
+  } 
+
+  
+  const differenceInMinutes = ((new Date().getTime() - passwordResetToken.created_at.getTime()) / (1000 * 60));
+  // Checks for stale token
+  if (differenceInMinutes > 60) {
+    const deletedToken = await db("password_reset_token")
+      .del()
+      .where("id", passwordResetToken.id);
+
+    // Handle error
+    if (!deletedToken) {
+      return res.status(400).send({
+        message: "Error deleting password reset token",
+      });
+    }
+    return res.status(400).send({
+      message: "Password reset link has expired, please request a new one",
+    })
   }
+  
 
   // Look up user via id to fetch email
   const user = await db("user").where("id", passwordResetToken.user_id).first();
@@ -238,7 +257,6 @@ router.post("/reset-password", async (req, res) => {
       .status(400)
       .send({ message: "Missing `token` or `password` or `email` field" });
   }
-
   // Validate password
   if (password.length < 6) {
     return res
