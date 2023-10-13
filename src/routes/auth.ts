@@ -277,6 +277,25 @@ router.post("/reset-password", async (req, res) => {
       });
     }
 
+    const differenceInMinutes = ((new Date().getTime() - foundToken.created_at.getTime()) / (1000 * 60));
+    
+    // Checks for stale token
+    if (differenceInMinutes > 60) {
+      const deletedToken = await db("password_reset_token")
+        .del()
+        .where("id", foundToken.id);
+  
+      // Handle error
+      if (!deletedToken) {
+        return res.status(400).send({
+          message: "Error deleting password reset token",
+        });
+      }
+      return res.status(400).send({
+        message: "Password reset link has expired, please request a new one",
+      })
+    }
+
     // Hash password before inserting to DB
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
