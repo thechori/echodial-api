@@ -12,7 +12,8 @@ import { createSendEmailCommand } from "../utils/email";
 import envConfig from "../configs/env";
 import { PasswordResetToken } from "../types";
 import { saltRounds } from "../configs/auth";
-
+import { passwordResetTokenExpirationInMinutes } from "../configs/auth";
+import { differenceInMinutes } from "date-fns";
 dotenv.config();
 
 const router = Router();
@@ -198,7 +199,6 @@ router.post("/reset-password-request", async (req, res) => {
 // Pass token to endpoint to be returned the email for UI
 router.get("/reset-password-token/:token", async (req, res) => {
   const { token } = req.params;
-
   // Check for missing field
   if (!token) {
     return res.status(400).send({ message: "Missing `token` field" });
@@ -213,7 +213,27 @@ router.get("/reset-password-token/:token", async (req, res) => {
     return res.status(400).send({
       message: "An error occurred when fetching the password reset token",
     });
+  } 
+
+  
+  const timeElapsed = differenceInMinutes(new Date().getTime(), passwordResetToken.created_at.getTime());
+  // Checks for stale token
+  if (timeElapsed > passwordResetTokenExpirationInMinutes) {
+    const deletedToken = await db("password_reset_token")
+      .del()
+      .where("id", passwordResetToken.id);
+
+    // Handle error
+    if (!deletedToken) {
+      return res.status(400).send({
+        message: "Error deleting password reset token",
+      });
+    }
+    return res.status(400).send({
+      message: "Password reset link has expired, please request a new one",
+    })
   }
+  
 
   // Look up user via id to fetch email
   const user = await db("user").where("id", passwordResetToken.user_id).first();
@@ -238,7 +258,6 @@ router.post("/reset-password", async (req, res) => {
       .status(400)
       .send({ message: "Missing `token` or `password` or `email` field" });
   }
-
   // Validate password
   if (password.length < 6) {
     return res
@@ -257,6 +276,24 @@ router.post("/reset-password", async (req, res) => {
       return res.status(400).send({
         message: "No password reset token found",
       });
+    }
+
+    const timeElapsed = differenceInMinutes(new Date().getTime(), foundToken.created_at.getTime());
+    // Checks for stale token
+    if (timeElapsed > passwordResetTokenExpirationInMinutes) {
+      const deletedToken = await db("password_reset_token")
+        .del()
+        .where("id", foundToken.id);
+  
+      // Handle error
+      if (!deletedToken) {
+        return res.status(400).send({
+          message: "Error deleting password reset token",
+        });
+      }
+      return res.status(400).send({
+        message: "Password reset link has expired, please request a new one",
+      })
     }
 
     // Hash password before inserting to DB
