@@ -12,7 +12,8 @@ import { createSendEmailCommand } from "../utils/email";
 import envConfig from "../configs/env";
 import { PasswordResetToken } from "../types";
 import { saltRounds } from "../configs/auth";
-
+import { passwordResetTokenExpirationInMinutes } from "../configs/auth";
+import { differenceInMinutes } from "date-fns";
 dotenv.config();
 
 const router = Router();
@@ -215,9 +216,9 @@ router.get("/reset-password-token/:token", async (req, res) => {
   } 
 
   
-  const differenceInMinutes = ((new Date().getTime() - passwordResetToken.created_at.getTime()) / (1000 * 60));
+  const timeElapsed = differenceInMinutes(new Date().getTime(), passwordResetToken.created_at.getTime());
   // Checks for stale token
-  if (differenceInMinutes > 60) {
+  if (timeElapsed > passwordResetTokenExpirationInMinutes) {
     const deletedToken = await db("password_reset_token")
       .del()
       .where("id", passwordResetToken.id);
@@ -277,10 +278,9 @@ router.post("/reset-password", async (req, res) => {
       });
     }
 
-    const differenceInMinutes = ((new Date().getTime() - foundToken.created_at.getTime()) / (1000 * 60));
-    
+    const timeElapsed = differenceInMinutes(new Date().getTime(), foundToken.created_at.getTime());
     // Checks for stale token
-    if (differenceInMinutes > 60) {
+    if (timeElapsed > passwordResetTokenExpirationInMinutes) {
       const deletedToken = await db("password_reset_token")
         .del()
         .where("id", foundToken.id);
