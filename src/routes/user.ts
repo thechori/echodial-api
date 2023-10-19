@@ -84,9 +84,9 @@ router.post("/", async (req: any, res) => {
 
       let errorMessage = `Error ${e.code}: ${e.message}`;
 
-      // Email already exists
+      // Email or phone already exists
       if (e.code === "23505") {
-        errorMessage = "This email address is already registered";
+        errorMessage = "Email address or phone is already registered";
       }
 
       return res.status(400).send({ message: errorMessage });

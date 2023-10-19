@@ -10,6 +10,7 @@ export enum Table {
   KnexMigrations = "knex_migrations",
   KnexMigrationsLock = "knex_migrations_lock",
   Lead = "lead",
+  LeadStatus = "lead_status",
   PasswordResetToken = "password_reset_token",
   User = "user",
 }
@@ -23,6 +24,7 @@ export type Tables = {
   "knex_migrations": KnexMigrations,
   "knex_migrations_lock": KnexMigrationsLock,
   "lead": Lead,
+  "lead_status": LeadStatus,
   "password_reset_token": PasswordResetToken,
   "user": User,
 };
@@ -133,6 +135,18 @@ export type Lead = {
   appointment_at: Date | null;
   not_interested_reason: string | null;
   archived_at: Date | null;
+  status: string | null;
+  do_not_call: boolean | null;
+  contact_made: boolean | null;
+  bad_number: boolean | null;
+  left_message: boolean | null;
+};
+
+export type LeadStatus = {
+  id: number;
+  value: string;
+  description: string | null;
+  label: string;
 };
 
 export type PasswordResetToken = {
