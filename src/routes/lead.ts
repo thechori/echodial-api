@@ -221,16 +221,16 @@ router.post("/csv", upload.single("file"), function (req, res) {
       }
 
       // Validate structure
-      const requiredColumnHeaders: {
-        email: number | null;
-        phone: number | null;
-        first_name: number | null;
-        last_name: number | null;
+      const columnHeaders: {
+        email: number;
+        phone: number;
+        first_name: number;
+        last_name: number;
       } = {
-        email: null,
-        phone: null,
-        first_name: null,
-        last_name: null,
+        email: -1,
+        phone: -1,
+        first_name: -1,
+        last_name: -1,
       };
 
       // Search first index of fileRows to create column mapping
@@ -246,35 +246,30 @@ router.post("/csv", upload.single("file"), function (req, res) {
       }
 
       // Ensure that all column maps were found, if not, show error
-      requiredColumnHeaders.email = h.indexOf("email");
-      requiredColumnHeaders.phone = h.indexOf("phone");
-      requiredColumnHeaders.first_name = h.indexOf("first_name");
-      requiredColumnHeaders.last_name = h.indexOf("last_name");
+      columnHeaders.email = h.indexOf("email");
+      columnHeaders.phone = h.indexOf("phone");
+      columnHeaders.first_name = h.indexOf("first_name");
+      columnHeaders.last_name = h.indexOf("last_name");
 
       const columnErrors: string[] = [];
 
-      for (const [key, value] of Object.entries(requiredColumnHeaders)) {
-        if (value === null || value === -1) {
-          console.error(`Column ${key} is missing data.`);
-          columnErrors.push(key);
+      for (const [key, value] of Object.entries(columnHeaders)) {
+        // Column not found
+        if (value === -1) {
+          const error = `Column "${key}" is missing or misspelled`;
+          columnErrors.push(error);
         }
       }
 
       if (columnErrors.length) {
-        return res
-          .status(400)
-          .send(
-            `Errors found in (${
-              columnErrors.length
-            }) columns: ${columnErrors.join(", ")}`
-          );
+        return res.status(400).send(columnErrors.join(", "));
       }
 
       try {
         // Transform CSV output structure to match DB schema
         const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
           // Transform phone number
-          const rawPhoneValue = row[requiredColumnHeaders.phone as number];
+          const rawPhoneValue = row[columnHeaders.phone as number];
           const phoneNumberForDb = transformPhoneNumberForDb(rawPhoneValue);
 
           // Validate phone number
@@ -286,10 +281,10 @@ router.post("/csv", upload.single("file"), function (req, res) {
 
           return {
             user_id: id,
-            email: row[requiredColumnHeaders.email as number],
+            email: row[columnHeaders.email as number],
             phone: phoneNumberForDb,
-            first_name: row[requiredColumnHeaders.first_name as number],
-            last_name: row[requiredColumnHeaders.last_name as number],
+            first_name: row[columnHeaders.first_name as number],
+            last_name: row[columnHeaders.last_name as number],
             source,
           };
         });
