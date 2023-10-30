@@ -4,13 +4,13 @@ export function createValueFromLabel(label: string) {
   const trimmed = label.trim();
 
   // Check for empty input
-  if (trimmed === "") throw blankInputError;
+  if (trimmed === "") throw new Error(blankInputError);
 
   // Check for special characters
-  const regex = /[^A-Za-z0-9]/;
+  const regex = /[^A-Za-z0-9 ]/;
   if (regex.test(trimmed)) {
     // special chars found, throw error
-    throw specialCharError;
+    throw new Error(specialCharError);
   }
 
   // Return final value

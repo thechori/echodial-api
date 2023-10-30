@@ -44,30 +44,30 @@ describe("createValueFromLabel", () => {
   // "home'slice" -> throw Error("Label cannot contain special characters")
   it("should throw an error", () => {
     const input = "home'slice";
-    expect(createValueFromLabel(input)).toThrowError(specialCharError);
+    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
   });
 
   // "home@slice" -> throw Error("Label cannot contain special characters")
   it("should throw an error", () => {
     const input = "home@slice";
-    expect(createValueFromLabel(input)).toThrowError(specialCharError);
+    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
   });
 
   // "home!slice" -> throw Error("Label cannot contain special characters")
   it("should throw an error", () => {
     const input = "home!slice";
-    expect(createValueFromLabel(input)).toThrowError(specialCharError);
+    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
   });
 
   // "home-slice" -> throw Error("Label cannot contain special characters")
   it("should throw an error", () => {
     const input = "home-slice";
-    expect(createValueFromLabel(input)).toThrowError(specialCharError);
+    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
   });
 
   // "" -> throw Error("Label must be at least one character long")
   it("should throw an error", () => {
     const input = "";
-    expect(createValueFromLabel(input)).toThrowError(blankInputError);
+    expect(() => createValueFromLabel(input)).toThrowError(blankInputError);
   });
 });
