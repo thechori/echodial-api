@@ -4,7 +4,7 @@ import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
 import { LeadCustomProperty } from "../types";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
 // Return LeadCustomProperty items
 router.get("/", async (req, res) => {

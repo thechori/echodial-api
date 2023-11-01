@@ -2,15 +2,15 @@ import { Router } from "express";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
-import { LeadStandardProperty } from "../types";
+import { LeadPropertyGroup } from "../types";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
-// Return LeadStandardProperty items
+// Return LeadPropertyGroup items
 router.get("/", async (req, res) => {
   try {
-    const leadStandardProperties: LeadStandardProperty[] = await db(
-      "lead_standard_property"
+    const leadStandardProperties: LeadPropertyGroup[] = await db(
+      "lead_property_group"
     );
     return res.status(200).send(leadStandardProperties);
   } catch (e) {
