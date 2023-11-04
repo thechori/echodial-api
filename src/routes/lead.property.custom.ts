@@ -54,13 +54,8 @@ router.get("/", async (req, res) => {
 // }
 router.post("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
-  const {
-    lead_property_group_id,
-    lead_property_type_id,
-    name,
-    label,
-    description,
-  } = req.body;
+  const { lead_property_group_id, lead_property_type_id, label, description } =
+    req.body;
 
   /* Check for required fields */
 
@@ -79,17 +74,25 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const newLeadCustomProperty = await db("lead_custom_property").insert({
-      user_id: id,
-      id,
-      lead_property_group_id,
-      lead_property_type_id,
-      label,
-      name: createValueFromLabel(label),
-      description,
-    });
+    const newLeadCustomProperty = await db("lead_custom_property")
+      .insert({
+        user_id: id,
+        lead_property_group_id,
+        lead_property_type_id,
+        label,
+        name: createValueFromLabel(label),
+        description,
+      })
+      .returning("*");
 
-    return res.status(200).send(newLeadCustomProperty);
+    if (newLeadCustomProperty.length !== 1) {
+      return res.status(400).send({
+        message:
+          "An error occurred when creating the LeadCustomProperty record",
+      });
+    }
+
+    return res.status(200).send(newLeadCustomProperty[0]);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
   }

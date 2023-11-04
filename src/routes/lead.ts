@@ -330,4 +330,30 @@ router.get("/pretty", async (req, res) => {
   res.status(200).send(leads);
 });
 
+router.post("/csv/validate", upload.single("file"), async (req, res) => {
+  const { id } = res.locals.jwt_decoded;
+  const { mapping_data } = req.body;
+
+  // Validate mapping_data
+  if (!mapping_data || !mapping_data.length) {
+    return res.status(400).send("Missing `mapping_data` array");
+  }
+
+  // Validate file existence
+  if (!req.file) {
+    return res.status(400).send("Missing `file` field");
+  }
+
+  // Obtain all of the column names
+  // TODO - see example from existing POST /csv enpodint
+});
+
+// Designating this as /csv/v2 to allow the current endpoint to continue functioning until this is 100% ready and we can decommission the original
+router.post("/csv/v2", upload.single("file"), async (req, res) => {
+  // Validate via logic from /csv/validate endpoint (extract this logic out into a function so it can be easily reused by both routes)
+  // TODO
+  // Insert into DB
+  // TODO
+});
+
 export default router;
