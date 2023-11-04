@@ -15,7 +15,31 @@ router.get("/", async (req, res) => {
     // Only return custom properties that have been created by the specific user
     const leadCustomProperties: LeadCustomProperty[] = await db(
       "lead_custom_property"
-    ).where("user_id", id);
+    )
+      .where("user_id", id)
+      .join(
+        "lead_property_group",
+        "lead_property_group_id",
+        "lead_property_group.id"
+      )
+      .join(
+        "lead_property_type",
+        "lead_property_type_id",
+        "lead_property_type.id"
+      )
+      .select(
+        "lead_custom_property.id as id",
+        "lead_custom_property.user_id as user_id",
+        "lead_custom_property.name as name",
+        "lead_custom_property.label as label",
+        "lead_custom_property.description as description",
+
+        "lead_property_group.id as lead_property_group_id",
+        "lead_property_group.name as lead_property_group_name",
+
+        "lead_property_type.id as lead_property_type_id",
+        "lead_property_type.name as lead_property_type_name"
+      );
     return res.status(200).send(leadCustomProperties);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
