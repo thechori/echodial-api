@@ -33,7 +33,6 @@ app.use("/auth", authRouter);
 app.use("/user", userRouter);
 app.use("/session", authMiddleware, sessionRouter);
 app.use("/lead", authMiddleware, leadRouter);
-app.use("/lead", authMiddleware, leadRouter);
 app.use("/lead-status", authMiddleware, leadStatusRouter);
 app.use("/caller-id", authMiddleware, callerIdRouter);
 app.use("/call", authMiddleware, callRouter);

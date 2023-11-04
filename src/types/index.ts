@@ -10,6 +10,10 @@ export enum Table {
   KnexMigrations = "knex_migrations",
   KnexMigrationsLock = "knex_migrations_lock",
   Lead = "lead",
+  LeadCustomProperty = "lead_custom_property",
+  LeadPropertyGroup = "lead_property_group",
+  LeadPropertyType = "lead_property_type",
+  LeadStandardProperty = "lead_standard_property",
   LeadStatus = "lead_status",
   PasswordResetToken = "password_reset_token",
   User = "user",
@@ -24,6 +28,10 @@ export type Tables = {
   "knex_migrations": KnexMigrations,
   "knex_migrations_lock": KnexMigrationsLock,
   "lead": Lead,
+  "lead_custom_property": LeadCustomProperty,
+  "lead_property_group": LeadPropertyGroup,
+  "lead_property_type": LeadPropertyType,
+  "lead_standard_property": LeadStandardProperty,
   "lead_status": LeadStatus,
   "password_reset_token": PasswordResetToken,
   "user": User,
@@ -140,6 +148,40 @@ export type Lead = {
   contact_made: boolean | null;
   bad_number: boolean | null;
   left_message: boolean | null;
+  custom_properties: unknown | null;
+};
+
+export type LeadCustomProperty = {
+  id: number;
+  user_id: number;
+  lead_property_group_id: number;
+  lead_property_type_id: number;
+  name: string;
+  label: string;
+  description: string | null;
+};
+
+export type LeadPropertyGroup = {
+  id: number;
+  name: string;
+  label: string;
+  description: string | null;
+};
+
+export type LeadPropertyType = {
+  id: number;
+  name: string;
+  label: string;
+  description: string | null;
+};
+
+export type LeadStandardProperty = {
+  id: number;
+  lead_property_group_id: number;
+  lead_property_type_id: number;
+  name: string;
+  label: string;
+  description: string | null;
 };
 
 export type LeadStatus = {
