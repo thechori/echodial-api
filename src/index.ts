@@ -17,6 +17,7 @@ import smsRouter from "./routes/sms";
 import metricRouter from "./routes/metric";
 import bucketRouter from "./routes/bucket";
 import stripeRouter from "./routes/stripe";
+// import { errorHandler } from "./middlewares/error-handler";
 
 const app = express();
 
@@ -40,6 +41,10 @@ app.use("/dialer", dialerRouter);
 app.use("/metric", authMiddleware, metricRouter);
 app.use("/bucket", authMiddleware, bucketRouter);
 app.use("/stripe", authMiddleware, stripeRouter);
+
+// TODO: test the effectiveness and usefulness of this
+// Error handling middleware
+// app.use(errorHandler)
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);

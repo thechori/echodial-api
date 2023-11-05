@@ -210,5 +210,7 @@ export type User = {
   created_at: Date;
   updated_at: Date;
   approved_for_beta: boolean | null;
+  stripe_customer_id: string | null;
+  stripe_subscription_id: string | null;
 };
 
