@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
 
   try {
-    const buckets = await db("bucket").where("user_id", id);
+    const buckets = await db<Bucket>("bucket").where("user_id", id);
     return res.status(200).send(buckets);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
@@ -35,7 +35,7 @@ router.post("/", async (req, res) => {
   };
 
   try {
-    const newBucket = await db("bucket")
+    const newBucket = await db<Bucket>("bucket")
       .insert(newBucketContent)
       .returning("*");
 
@@ -57,7 +57,7 @@ router.put("/:id", async (req, res) => {
   const { body } = req;
 
   try {
-    const updatedBucket = await db("bucket")
+    const updatedBucket = await db<Bucket>("bucket")
       .where("id", id)
       .first()
       .update({
@@ -87,7 +87,7 @@ router.delete("/:id", async (req, res) => {
   }
 
   try {
-    const deletedBucket = await db("bucket")
+    const deletedBucket = await db<Bucket>("bucket")
       .where("id", id)
       .first()
       .del()

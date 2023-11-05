@@ -11,6 +11,7 @@ import { authMiddleware } from "../middlewares/auth";
 import { saltRounds } from "../configs/auth";
 import { extractErrorMessage } from "../utils/error";
 import envConfig from "../configs/env";
+import { User } from "../types";
 
 const stripe = new Stripe(envConfig.stripeApiKey);
 const router = express.Router();
@@ -18,7 +19,7 @@ const router = express.Router();
 // Read all users
 router.get("/", authMiddleware, async (req, res) => {
   try {
-    const users = await db("user");
+    const users = await db<User>("user");
     res.json(users);
   } catch (e) {
     res.status(500).json({ message: extractErrorMessage(e) });
@@ -34,7 +35,7 @@ router.get("/:id", authMiddleware, async (req, res) => {
   }
 
   try {
-    const users = await db("user").where("id", id);
+    const users = await db<User>("user").where("id", id);
     res.json(users);
   } catch (e) {
     res.status(500).json({ message: extractErrorMessage(e) });
@@ -67,7 +68,7 @@ router.post("/", async (req: any, res) => {
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Run DB query
-    const newUser = await db("user")
+    const newUser = await db<User>("user")
       .insert({
         email: emailClean,
         password_hash: passwordHash,
@@ -95,7 +96,7 @@ router.post("/", async (req: any, res) => {
       ],
     });
 
-    const updatedUser = await db("user")
+    const updatedUser = await db<User>("user")
       .update({
         stripe_customer_id: stripeCustomer.id,
         stripe_subscription_id: stripeSubscription.id,

@@ -35,7 +35,7 @@ router.use("/property/group", authMiddleware, leadPropertyGroupRouter);
 router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
 
-  const leads = await db("lead").where({
+  const leads = await db<Lead>("lead").where({
     user_id: id,
   });
 
@@ -50,9 +50,7 @@ router.get("/:id", async (req, res) => {
     return res.status(400).send("Missing `id` parameter");
   }
 
-  const leads = await db("lead").where({
-    id,
-  });
+  const leads = await db<Lead>("lead").where("id", id);
 
   if (leads.length !== 1) {
     return res.status(400).send({
@@ -82,7 +80,7 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
-    const updatedLeads = await db("lead")
+    const updatedLeads = await db<Lead>("lead")
       .where("id", id)
       .update({
         ...body,
@@ -121,7 +119,7 @@ router.patch("/:id", async (req, res) => {
   }
 
   try {
-    const updatedLeads = await db("lead")
+    const updatedLeads = await db<Lead>("lead")
       .where("id", id)
       .update({
         ...body,
@@ -151,7 +149,7 @@ router.delete("/:id", async (req, res) => {
   }
 
   try {
-    const deletionResult = await db("lead").del().where("id", id);
+    const deletionResult = await db<Lead>("lead").del().where("id", id);
     return res.status(200).send(deletionResult);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
@@ -167,7 +165,7 @@ router.post("/bulk-delete", async (req, res) => {
   }
 
   try {
-    const rowsDeletedCount = await db("lead").whereIn("id", ids).del();
+    const rowsDeletedCount = await db<Lead>("lead").whereIn("id", ids).del();
     return res.status(200).json({
       message: `Deleted ${rowsDeletedCount} rows`,
       data: rowsDeletedCount,
@@ -194,7 +192,7 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const newLead = await db("lead").insert({
+    const newLead = await db<Lead>("lead").insert({
       user_id: id,
       email,
       phone: phoneNumberForDb, // Note: Hardcoding country code for best UX
@@ -305,7 +303,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
         });
 
         // Insert into DB
-        await db("lead").insert(leadsToInsert);
+        await db<Lead>("lead").insert(leadsToInsert);
         res.status(200).json({
           message: `Successfully uploaded ${fileRows.length} leads`,
           data: fileRows,
@@ -320,7 +318,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
 });
 
 router.get("/pretty", async (req, res) => {
-  const leads = await db("lead")
+  const leads = await db<Lead>("lead")
     .join("person", "person_id", "person.id")
     .join("campaign", "campaign_id", "campaign.id")
     .select(

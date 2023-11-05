@@ -11,15 +11,15 @@ import {
 //
 import { extractErrorMessage } from "../utils/error";
 import db from "../utils/db";
-import { Call } from "../types";
+import { Call, Lead } from "../types";
 
 const router = Router();
 
 export type TMetrics = {
   leadsCreatedCountPreviousPeriod: number | null;
   leadsCreatedCountCurrentPeriod: number | null;
-  callsMadePreviousPeriod: Call[];
-  callsMadeCurrentPeriod: Call[];
+  callsMadePreviousPeriod: Pick<Call, "id" | "created_at">[];
+  callsMadeCurrentPeriod: Pick<Call, "id" | "created_at">[];
   callsAnsweredCountPreviousPeriod: number | null;
   callsAnsweredCountCurrentPeriod: number | null;
   averageCallDurationInSecondsPreviousPeriod: number | null;
@@ -69,7 +69,7 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     let to = today; // tomorrow at 00:00:00
 
     // Leads
-    const leadsCreatedPreviousPeriod = await db("lead")
+    const leadsCreatedPreviousPeriod = await db<Lead>("lead")
       .where({
         user_id: id,
       })
@@ -79,15 +79,15 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     console.log("leadsCreatedPreviousPeriod", leadsCreatedPreviousPeriod);
 
     // Calls made
-    const callsMadePreviousPeriod = await db("call")
+    const callsMadePreviousPeriod = await db<Pick<Call, "id" | "created_at">>(
+      "call"
+    )
       .select("id", "created_at")
-      .where({
-        user_id: id,
-      })
+      .where("user_id", id)
       .whereBetween("created_at", [from, to]);
 
     // Calls answered
-    const callsAnsweredPreviousPeriod = await db("call")
+    const callsAnsweredPreviousPeriod = await db<Call>("call")
       .where({
         user_id: id,
         was_answered: true,
@@ -117,7 +117,7 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     to = addOperator(today, 1); // exclusive of upper bound
 
     // Leads
-    const leadsCreatedCurrentPeriod = await db("lead")
+    const leadsCreatedCurrentPeriod = await db<Lead>("lead")
       .where({
         user_id: id,
       })
@@ -127,17 +127,17 @@ router.get("/dashboard/:metric_resolution", async (req, res) => {
     // Calls made
     console.log("from: ", from);
     console.log("to: ", to);
-    const callsMadeCurrentPeriod = await db("call")
+    const callsMadeCurrentPeriod = await db<Pick<Call, "id" | "created_at">>(
+      "call"
+    )
       .select("id", "created_at")
-      .where({
-        user_id: id,
-      })
+      .where("user_id", id)
       .whereBetween("created_at", [from, to]);
 
     console.log("callsMadeCurrentPeriod", callsMadeCurrentPeriod);
 
     // Calls answered
-    const callsAnsweredCurrentPeriod = await db("call")
+    const callsAnsweredCurrentPeriod = await db<Call>("call")
       .where({
         user_id: id,
         was_answered: true,

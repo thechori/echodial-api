@@ -26,7 +26,7 @@ router.post("/", async (req, res) => {
   //     to_number: To,
   //     // "lead_id": // TODO: Add this
   //   };
-  //   const dbResult = await db("call").insert(newCall);
+  //   const dbResult = await db<Call>("call").insert(newCall);
   //   console.log("dbResult", dbResult);
 
   //   return res;

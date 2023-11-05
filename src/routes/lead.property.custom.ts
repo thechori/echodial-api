@@ -74,7 +74,9 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const newLeadCustomProperty = await db("lead_custom_property")
+    const newLeadCustomProperty = await db<LeadCustomProperty>(
+      "lead_custom_property"
+    )
       .insert({
         user_id: id,
         lead_property_group_id,

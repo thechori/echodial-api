@@ -2,7 +2,7 @@ import { Router } from "express";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
-import { Call } from "../types";
+import { Call, Lead } from "../types";
 
 const router = Router();
 
@@ -11,7 +11,7 @@ router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
 
   try {
-    const calls = await db("call").where("user_id", id);
+    const calls = await db<Call>("call").where("user_id", id);
     console.log("calls", calls);
     return res.status(200).send(calls);
   } catch (e) {
@@ -43,7 +43,9 @@ router.post("/", async (req, res) => {
   };
 
   try {
-    const newCall = await db("call").insert(newCallContent).returning("*");
+    const newCall = await db<Call>("call")
+      .insert(newCallContent)
+      .returning("*");
 
     if (newCall.length !== 1) {
       return res.status(400).send({
@@ -52,7 +54,7 @@ router.post("/", async (req, res) => {
     }
 
     // Increment call_count for Lead
-    await db("lead").where({ id: lead_id }).increment("call_count", 1);
+    await db<Lead>("lead").where({ id: lead_id }).increment("call_count", 1);
 
     return res.status(200).send(newCall[0]);
   } catch (e) {
@@ -66,7 +68,7 @@ router.put("/:id", async (req, res) => {
   const { body } = req;
 
   try {
-    const updatedCall = await db("call")
+    const updatedCall = await db<Call>("call")
       .where("id", id)
       .first()
       .update({
@@ -96,7 +98,7 @@ router.get("/:id/end", async (req, res) => {
   }
 
   try {
-    const endedCall = await db("call")
+    const endedCall = await db<Call>("call")
       .where("id", id)
       .update({
         disconnected_at: new Date(),
@@ -122,7 +124,7 @@ router.put("/twilio-call-sid/:twilio_call_sid", async (req, res) => {
   const { body } = req;
 
   try {
-    const updatedCall = await db("call")
+    const updatedCall = await db<Call>("call")
       .where("twilio_call_sid", twilio_call_sid)
       .first()
       .update({
@@ -152,7 +154,7 @@ router.delete("/:id", async (req, res) => {
   }
 
   try {
-    const deletedCall = await db("call")
+    const deletedCall = await db<Call>("call")
       .where("id", id)
       .first()
       .del()

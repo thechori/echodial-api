@@ -9,7 +9,7 @@ const router = Router();
 // Return lead statuses
 router.get("/", async (req, res) => {
   try {
-    const leadStatuses: LeadStatus[] = await db("lead_status");
+    const leadStatuses: LeadStatus[] = await db<LeadStatus>("lead_status");
     return res.status(200).send(leadStatuses);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });

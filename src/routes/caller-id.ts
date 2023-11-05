@@ -42,7 +42,7 @@ router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
 
   try {
-    const caller_ids = await db("caller_id").where("user_id", id);
+    const caller_ids = await db<CallerId>("caller_id").where("user_id", id);
     return res.status(200).send(caller_ids);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
@@ -100,7 +100,7 @@ router.post("/", async (req, res) => {
   };
 
   try {
-    await db("caller_id").insert(newCallerId);
+    await db<CallerId>("caller_id").insert(newCallerId);
     return res.status(200).send();
   } catch (e) {
     return res.status(500).json({ message: extractErrorMessage(e) });
@@ -153,7 +153,7 @@ router.post("/delete", async (req, res) => {
 
   // Delete EchoDial Caller ID
   try {
-    const dbResult = await db("caller_id").del().where("id", id);
+    const dbResult = await db<CallerId>("caller_id").del().where("id", id);
     return res.status(200).send(dbResult);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });

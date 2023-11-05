@@ -17,9 +17,6 @@ export const getTrialStatus = async (req: Request, res: Response) => {
   // Search for User via ID
   const user = await db<User>("user").where("id", id).first();
 
-  //
-  console.log("user", user);
-
   if (!user) {
     return res.status(400).send({ message: "No user found" });
   }
@@ -29,16 +26,19 @@ export const getTrialStatus = async (req: Request, res: Response) => {
     return res.status(200).send(null);
   }
 
-  console.log("eeek ");
-
   // Search for Subscription via stripe_subscription_id in User record
-  const subscriptions = await stripe.subscriptions.retrieve(
+  const subscription = await stripe.subscriptions.retrieve(
     user.stripe_subscription_id
   );
 
+  // Handle no subscription found
+  if (!subscription) {
+    return res.status(200).send(null);
+  }
+
   res.status(200).send({
-    status: subscriptions.status,
-    trial_start: subscriptions.trial_start,
-    trial_end: subscriptions.trial_end,
+    status: subscription.status,
+    trial_start: subscription.trial_start,
+    trial_end: subscription.trial_end,
   });
 };
