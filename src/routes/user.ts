@@ -2,6 +2,7 @@ require("dotenv").config();
 
 import express from "express";
 import bcrypt from "bcrypt";
+import Stripe from "stripe";
 //
 import db from "../utils/db";
 import { isValidPhoneNumberForDb } from "../utils/validators/phone";
@@ -9,7 +10,9 @@ import { isValidEmailAddress } from "../utils/validators/email";
 import { authMiddleware } from "../middlewares/auth";
 import { saltRounds } from "../configs/auth";
 import { extractErrorMessage } from "../utils/error";
+import envConfig from "../configs/env";
 
+const stripe = new Stripe(envConfig.stripeApiKey);
 const router = express.Router();
 
 // Read all users
@@ -74,9 +77,35 @@ router.post("/", async (req: any, res) => {
       })
       .returning("*");
 
+    // Create Stripe Customer and Subscription
+    const stripeCustomer = await stripe.customers.create({
+      email: emailClean,
+      name: `${firstName} ${lastName}`,
+      phone: phone,
+    });
+
+    const stripeSubscription = await stripe.subscriptions.create({
+      customer: stripeCustomer.id,
+      trial_period_days: 7,
+      items: [
+        {
+          price: "price_1NvS4dKGxd0U3zJwIewutyC0", // (test) Standard plan - $69.99
+          // price: "price_1O8pAnKGxd0U3zJwosJYrkY8", // (live) Dollar Donation Club
+        },
+      ],
+    });
+
+    const updatedUser = await db("user")
+      .update({
+        stripe_customer_id: stripeCustomer.id,
+        stripe_subscription_id: stripeSubscription.id,
+      })
+      .where("id", newUser[0].id)
+      .returning("*");
+
     return res
       .status(201)
-      .json({ message: "Successfully created new user", data: newUser[0] });
+      .json({ message: "Successfully created new user", data: updatedUser[0] });
   } catch (e) {
     // Safely check for `code` in error object
     if (e !== null && typeof e === "object" && "code" in e && "message" in e) {
