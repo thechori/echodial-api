@@ -11,6 +11,7 @@ import {
   transformPhoneNumberForDb,
 } from "../utils/validators/phone";
 import { authMiddleware } from "../middlewares/auth";
+import leadStatusRouter from "./lead.status";
 import leadStandardPropertyRouter from "./lead.property.standard";
 import leadCustomPropertyRouter from "./lead.property.custom";
 import leadPropertyGroupRouter from "./lead.property.group";
@@ -23,6 +24,8 @@ const router = Router({ mergeParams: true });
 
 // Nested routers
 // Note: Placement of this mattered -- the endpoint would crash when this was beneath the current router definitions
+router.use("/status", authMiddleware, leadStatusRouter);
+//
 router.use("/property/standard", authMiddleware, leadStandardPropertyRouter);
 router.use("/property/custom", authMiddleware, leadCustomPropertyRouter);
 router.use("/property/type", authMiddleware, leadPropertyTypeRouter);
