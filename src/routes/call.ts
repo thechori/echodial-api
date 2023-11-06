@@ -3,8 +3,11 @@ import { Router } from "express";
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
 import { Call, Lead } from "../types";
+import { getCallUsage } from "../controllers/call/get-usage";
 
 const router = Router();
+
+router.use("/usage", getCallUsage);
 
 // Return user-owned Calls
 router.get("/", async (req, res) => {

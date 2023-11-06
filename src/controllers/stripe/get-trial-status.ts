@@ -40,5 +40,6 @@ export const getTrialStatus = async (req: Request, res: Response) => {
     status: subscription.status,
     trial_start: subscription.trial_start,
     trial_end: subscription.trial_end,
+    trial_settings: subscription.trial_settings,
   });
 };
