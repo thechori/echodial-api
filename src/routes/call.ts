@@ -15,7 +15,6 @@ router.get("/", async (req, res) => {
 
   try {
     const calls = await db<Call>("call").where("user_id", id);
-    console.log("calls", calls);
     return res.status(200).send(calls);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
