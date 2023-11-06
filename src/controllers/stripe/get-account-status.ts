@@ -1,16 +1,23 @@
+import { Request, Response } from "express";
 import Stripe from "stripe";
 //
 import envConfig from "../../configs/env";
 import db from "../../utils/db";
 import { User } from "../../types";
-import { Request, Response } from "express";
 
 const stripe = new Stripe(envConfig.stripeApiKey);
+
+type TAccountStatus = {
+  subscription: null | "standard" | "pro" | "unlimited";
+};
 
 // Returns
 // `null` if no trial or subscription
 // `number` of days remaining
-export const getTrialStatus = async (req: Request, res: Response) => {
+export const getAccountStatus = async (
+  req: Request,
+  res: Response<TAccountStatus | { message: string }>
+) => {
   // Extract User ID
   const { id } = res.locals.jwt_decoded;
 
@@ -23,7 +30,9 @@ export const getTrialStatus = async (req: Request, res: Response) => {
 
   // Handle no subscription
   if (user.stripe_subscription_id === null) {
-    return res.status(200).send(null);
+    return res.status(200).send({
+      subscription: null,
+    });
   }
 
   // Search for Subscription via stripe_subscription_id in User record
@@ -33,13 +42,14 @@ export const getTrialStatus = async (req: Request, res: Response) => {
 
   // Handle no subscription found
   if (!subscription) {
-    return res.status(200).send(null);
+    return res.status(200).send({
+      subscription: null,
+    });
   }
 
+  console.log("subscription", subscription);
+
   res.status(200).send({
-    status: subscription.status,
-    trial_start: subscription.trial_start,
-    trial_end: subscription.trial_end,
-    trial_settings: subscription.trial_settings,
+    subscription: "unlimited",
   });
 };
