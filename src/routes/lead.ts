@@ -254,7 +254,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
         return res
           .status(400)
           .send(
-            "CSV file corrupted. Please check the structure (e.g., column names) upload another one."
+            "CSV file corrupted. Please check the structure (e.g., column names) upload another one.",
           );
       }
 
@@ -288,7 +288,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
           // Validate phone number
           if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
             throw new Error(
-              `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`
+              `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`,
             );
           }
 
@@ -326,13 +326,14 @@ router.get("/pretty", async (req, res) => {
       "lead.created_at",
       "lead.body as message",
       "person.phone as person_phone",
-      "campaign.name as campaign_name"
+      "campaign.name as campaign_name",
     );
   res.status(200).send(leads);
 });
 
 router.post("/csv/validate", upload.single("file"), async (req, res) => {
-  const { id } = res.locals.jwt_decoded;
+  // Extract user ID
+  // const { id } = res.locals.jwt_decoded;
   const { mapping_data } = req.body;
 
   // Validate mapping_data
@@ -350,11 +351,11 @@ router.post("/csv/validate", upload.single("file"), async (req, res) => {
 });
 
 // Designating this as /csv/v2 to allow the current endpoint to continue functioning until this is 100% ready and we can decommission the original
-router.post("/csv/v2", upload.single("file"), async (req, res) => {
-  // Validate via logic from /csv/validate endpoint (extract this logic out into a function so it can be easily reused by both routes)
-  // TODO
-  // Insert into DB
-  // TODO
-});
+// router.post("/csv/v2", upload.single("file"), async (req, res) => {
+// Validate via logic from /csv/validate endpoint (extract this logic out into a function so it can be easily reused by both routes)
+// TODO
+// Insert into DB
+// TODO
+// });
 
 export default router;

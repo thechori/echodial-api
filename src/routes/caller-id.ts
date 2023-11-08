@@ -75,7 +75,7 @@ router.post("/", async (req, res) => {
 
     // Send SMS to `validationRequest.phoneNumber` to give them the confirmation code to use within the Twilio phone call
     console.log(
-      `sending validation code (${validationRequest.validationCode}) to ${phoneNumberForDb}`
+      `sending validation code (${validationRequest.validationCode}) to ${phoneNumberForDb}`,
     );
     twilioClient.messages.create({
       body: `Validation code: ${validationRequest.validationCode}`,
@@ -127,7 +127,7 @@ router.post("/delete", async (req, res) => {
     const outgoingCallerIds = await twilioClient.outgoingCallerIds.list();
     console.log("outgoingCallerIds", outgoingCallerIds);
     const callerIdMatch = outgoingCallerIds.find(
-      (cid) => cid.phoneNumber === phone_number
+      (cid) => cid.phoneNumber === phone_number,
     );
     if (!callerIdMatch)
       throw "No caller id record found with that phone number";

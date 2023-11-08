@@ -1,5 +1,8 @@
 require("dotenv").config();
 
+// Error handling middleware - must be required before using it
+require("express-async-errors");
+
 import express, { Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
@@ -12,7 +15,6 @@ import userRouter from "./routes/user";
 import dialerRouter from "./routes/dialer";
 import callRouter from "./routes/call";
 import callerIdRouter from "./routes/caller-id";
-import smsRouter from "./routes/sms";
 import metricRouter from "./routes/metric";
 import bucketRouter from "./routes/bucket";
 import stripeRouter from "./routes/stripe";
@@ -34,16 +36,11 @@ app.use("/user", userRouter);
 app.use("/lead", authMiddleware, leadRouter);
 app.use("/caller-id", authMiddleware, callerIdRouter);
 app.use("/call", authMiddleware, callRouter);
-app.use("/sms", authMiddleware, smsRouter);
 app.use("/dialer", dialerRouter);
 app.use("/metric", authMiddleware, metricRouter);
 app.use("/bucket", authMiddleware, bucketRouter);
 app.use("/stripe", authMiddleware, stripeRouter);
 app.use("/trial-credit", authMiddleware, trialCreditRouter);
-
-// TODO: test the effectiveness and usefulness of this
-// Error handling middleware
-// app.use(errorHandler)
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);

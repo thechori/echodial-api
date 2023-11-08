@@ -8,7 +8,7 @@ import { DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS } from "../../configs/app";
 // This will generally be used when new accounts are created, but it can also be manually triggered when we want to provide a user with credits
 export const createTrialCredits = async (
   req: Request,
-  res: Response<TrialCredit | { message: string }>
+  res: Response<TrialCredit | { message: string }>,
 ) => {
   // Extract User ID and amount
   const { id } = res.locals.jwt_decoded;

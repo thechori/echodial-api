@@ -5,7 +5,7 @@ import db from "../../utils/db";
 
 export const getTrialCredits = async (
   req: Request,
-  res: Response<TrialCredit | { message: string }>
+  res: Response<TrialCredit | { message: string }>,
 ) => {
   // Extract User ID
   const { id } = res.locals.jwt_decoded;

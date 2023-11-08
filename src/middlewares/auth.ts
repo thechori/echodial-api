@@ -19,7 +19,7 @@ export const authMiddleware: RequestHandler = async (req, res, next) => {
     const token = authorization.split(" ")[1];
     const jwt_decoded = await jwt.verify(
       token,
-      process.env.BCRYPT_SECRET as string
+      process.env.BCRYPT_SECRET as string,
     );
 
     // Attach JWT to req for each access

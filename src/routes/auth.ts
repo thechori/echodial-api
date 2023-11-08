@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -6,7 +6,6 @@ import crypto from "crypto";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
-import { authMiddleware } from "../middlewares/auth";
 import { sesClient } from "../services/ses-client";
 import { createSendEmailCommand } from "../utils/email";
 import envConfig from "../configs/env";
@@ -17,23 +16,6 @@ import { differenceInMinutes } from "date-fns";
 dotenv.config();
 
 const router = Router();
-
-// Endpoint is mostly for capturing user behavior, the heavy work is done on the client when they clear the local storage item
-router.get("/sign-out", authMiddleware, async (req: Request, res: Response) => {
-  const { jwt } = res.locals;
-  if (!jwt) {
-    return res.status(400).send("no jwt found");
-  }
-
-  const { id } = jwt;
-
-  // await db<UserEvent>("user_event").insert({
-  //   user_id: id,
-  //   user_event_type_id: 4, // id 4 = "sign-out"
-  // });
-
-  return res.status(200).send();
-});
 
 // Sign in
 router.post("/sign-in", async (req, res) => {
@@ -90,7 +72,7 @@ router.get("/authenticate", async (req, res) => {
   try {
     const decoded = await jwt.verify(
       token,
-      process.env.BCRYPT_SECRET as string
+      process.env.BCRYPT_SECRET as string,
     );
     return res.status(200).json({ message: "Success", data: decoded });
   } catch (e) {
@@ -127,7 +109,7 @@ router.post("/reset-password-request", async (req, res) => {
 
     // Check for existing token
     const existingPasswordResetToken = await db<PasswordResetToken>(
-      "password_reset_token"
+      "password_reset_token",
     )
       .where("user_id", user.id)
       .first();
@@ -150,7 +132,7 @@ router.post("/reset-password-request", async (req, res) => {
 
     // Insert into database
     const newPasswordResetToken = await db<PasswordResetToken>(
-      "password_reset_token"
+      "password_reset_token",
     )
       .insert(newPasswordResetTokenContent)
       .returning("*");
@@ -158,7 +140,7 @@ router.post("/reset-password-request", async (req, res) => {
     // Handle errors
     if (newPasswordResetToken.length !== 1) {
       return console.error(
-        "An error occurred when creating a single new PasswordResetToken record"
+        "An error occurred when creating a single new PasswordResetToken record",
       );
     }
 
@@ -209,7 +191,7 @@ router.get("/reset-password-token/:token", async (req, res) => {
   }
 
   const passwordResetToken = await db<PasswordResetToken>(
-    "password_reset_token"
+    "password_reset_token",
   )
     .where("token", token)
     .first();
@@ -223,7 +205,7 @@ router.get("/reset-password-token/:token", async (req, res) => {
 
   const timeElapsed = differenceInMinutes(
     new Date().getTime(),
-    passwordResetToken.created_at.getTime()
+    passwordResetToken.created_at.getTime(),
   );
   // Checks for stale token
   if (timeElapsed > passwordResetTokenExpirationInMinutes) {
@@ -289,7 +271,7 @@ router.post("/reset-password", async (req, res) => {
 
     const timeElapsed = differenceInMinutes(
       new Date().getTime(),
-      foundToken.created_at.getTime()
+      foundToken.created_at.getTime(),
     );
     // Checks for stale token
     if (timeElapsed > passwordResetTokenExpirationInMinutes) {

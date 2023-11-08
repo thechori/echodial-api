@@ -11,9 +11,10 @@ Node.js Express backend for the EchoDial product
 ## Getting Started
 
 1. Create the `.env` file at the root, obtain contents from [Ryan Teodoro](ryan@echodial.com)
-2. Install dependencies (`npm install`)
-3. Run app (`npm run dev`)
-4. Visit at `http://localhost:3001` (unless you've changed the `PORT` variable in the `.env` file)
+1. Install dependencies (`npm install`)
+1. Install husky to support pre-commit hooks (`./node_modules/.bin/husky install`)
+1. Run app (`npm run dev`)
+1. Visit at `http://localhost:3001` (unless you've changed the `PORT` variable in the `.env` file)
 
 ## Development
 

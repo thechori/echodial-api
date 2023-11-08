@@ -5,7 +5,7 @@ import { TrialCredit } from "../../types";
 
 export const deductTrialCredits = async (
   req: Request,
-  res: Response<TrialCredit | { message: string }>
+  res: Response<TrialCredit | { message: string }>,
 ) => {
   // Extract User ID and amount
   const { id } = res.locals.jwt_decoded;

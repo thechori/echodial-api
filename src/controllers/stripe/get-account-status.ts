@@ -16,7 +16,7 @@ type TAccountStatus = {
 // `number` of days remaining
 export const getAccountStatus = async (
   req: Request,
-  res: Response<TAccountStatus | { message: string }>
+  res: Response<TAccountStatus | { message: string }>,
 ) => {
   // Extract User ID
   const { id } = res.locals.jwt_decoded;
@@ -37,7 +37,7 @@ export const getAccountStatus = async (
 
   // Search for Subscription via stripe_subscription_id in User record
   const subscription = await stripe.subscriptions.retrieve(
-    user.stripe_subscription_id
+    user.stripe_subscription_id,
   );
 
   // Handle no subscription found
