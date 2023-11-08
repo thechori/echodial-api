@@ -17,7 +17,7 @@ export const createTrialCredits = async (
   const { amount } = req.body;
   const amountParsed = parseInt(amount);
   if (amountParsed && typeof amountParsed !== "number") {
-    return res.status(400).send({ message: "Field `amount` is malformed" });
+    throw Error("Field `amount` is malformed");
   }
 
   // Determined amount
@@ -39,9 +39,7 @@ export const createTrialCredits = async (
       .returning("*");
 
     if (!newTrialCredit) {
-      return res
-        .status(400)
-        .send({ message: "Error creating new trial credit record" });
+      throw Error("Error creating new trial credit record");
     }
 
     return res.status(200).send(newTrialCredit);
@@ -57,9 +55,7 @@ export const createTrialCredits = async (
       .returning("*");
 
     if (!updatedTrialCredit) {
-      return res
-        .status(400)
-        .send({ message: "Error updating the trial credit record" });
+      throw Error("Error updating the trial credit record");
     }
 
     return res.status(200).send(updatedTrialCredit);

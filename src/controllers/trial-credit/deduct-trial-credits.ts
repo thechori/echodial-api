@@ -14,9 +14,7 @@ export const deductTrialCredits = async (
   const { amount } = req.body;
   const amountParsed = parseInt(amount);
   if (!amountParsed || typeof amountParsed !== "number") {
-    return res
-      .status(400)
-      .send({ message: "Field `amount` is missing or malformed" });
+    throw Error("Field `amount` is missing or malformed");
   }
 
   // Find record in db
@@ -31,7 +29,7 @@ export const deductTrialCredits = async (
 
   // Handle no record found
   if (!trialCredit) {
-    return res.status(400).send({ message: "No trial credits found" });
+    throw Error("No trial credits found");
   }
 
   return res.status(200).send(trialCredit);

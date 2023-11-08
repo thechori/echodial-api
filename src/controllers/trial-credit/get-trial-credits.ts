@@ -16,7 +16,7 @@ export const getTrialCredits = async (
     .first();
 
   if (!trialCredit) {
-    return res.status(400).send({ message: "No trial credits found" });
+    throw Error("No trial credits found");
   }
 
   return res.status(200).send(trialCredit);
