@@ -19,6 +19,7 @@ import metricRouter from "./routes/metric";
 import bucketRouter from "./routes/bucket";
 import stripeRouter from "./routes/stripe";
 import trialCreditRouter from "./routes/trial-credit";
+import { extractErrorMessage } from "./utils/error";
 
 const app = express();
 
@@ -41,6 +42,12 @@ app.use("/metric", authMiddleware, metricRouter);
 app.use("/bucket", authMiddleware, bucketRouter);
 app.use("/stripe", authMiddleware, stripeRouter);
 app.use("/trial-credit", authMiddleware, trialCreditRouter);
+
+// Error handling middleware (via express-async-errors)
+app.use((err: any, req: Request, res: Response, next: any) => {
+  res.send({ message: extractErrorMessage(err) });
+  next(err);
+});
 
 app.listen(process.env.PORT, () => {
   console.log("Environment: ", process.env.NODE_ENV);
