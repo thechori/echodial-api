@@ -9,7 +9,6 @@ import { authMiddleware } from "./middlewares/auth";
 import authRouter from "./routes/auth";
 import leadRouter from "./routes/lead";
 import userRouter from "./routes/user";
-import sessionRouter from "./routes/session";
 import dialerRouter from "./routes/dialer";
 import callRouter from "./routes/call";
 import callerIdRouter from "./routes/caller-id";
@@ -17,7 +16,7 @@ import smsRouter from "./routes/sms";
 import metricRouter from "./routes/metric";
 import bucketRouter from "./routes/bucket";
 import stripeRouter from "./routes/stripe";
-// import { errorHandler } from "./middlewares/error-handler";
+import trialCreditRouter from "./routes/trial-credit";
 
 const app = express();
 
@@ -32,7 +31,6 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/auth", authRouter);
 app.use("/user", userRouter);
-app.use("/session", authMiddleware, sessionRouter);
 app.use("/lead", authMiddleware, leadRouter);
 app.use("/caller-id", authMiddleware, callerIdRouter);
 app.use("/call", authMiddleware, callRouter);
@@ -41,6 +39,7 @@ app.use("/dialer", dialerRouter);
 app.use("/metric", authMiddleware, metricRouter);
 app.use("/bucket", authMiddleware, bucketRouter);
 app.use("/stripe", authMiddleware, stripeRouter);
+app.use("/trial-credit", authMiddleware, trialCreditRouter);
 
 // TODO: test the effectiveness and usefulness of this
 // Error handling middleware
