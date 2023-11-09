@@ -56,7 +56,6 @@ router.post("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
   const { lead_property_group_id, lead_property_type_id, label, description } =
     req.body;
-
   /* Check for required fields */
 
   if (lead_property_group_id === null) {
@@ -74,6 +73,16 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    const existingRecord = await db("lead_custom_property")
+    .where("label", label)
+    .first();
+
+    if (existingRecord) {
+      return res.status(400).send({
+        message:
+          "An error occurred when creating the LeadCustomProperty record",
+      });
+    }
     const newLeadCustomProperty = await db("lead_custom_property")
       .insert({
         user_id: id,
