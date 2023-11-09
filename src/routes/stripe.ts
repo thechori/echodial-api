@@ -3,14 +3,14 @@ import { Router } from "express";
 import { getStripeCustomers } from "../controllers/stripe/get-customers";
 import { getStripeSubscriptions } from "../controllers/stripe/get-subscriptions";
 import { getStripeProducts } from "../controllers/stripe/get-products";
-import { getAccountStatus } from "../controllers/stripe/get-account-status";
+import { getSubscriptionStatus } from "../controllers/stripe/get-subscription-status";
 
 const router = Router({ mergeParams: true });
 
 // Return LeadPropertyGroup items
-router.get("/customers", getStripeCustomers);
-router.get("/subscriptions", getStripeSubscriptions);
-router.get("/products", getStripeProducts);
-router.get("/account-status", getAccountStatus);
+router.get("/customers", getStripeCustomers); // TODO: lock this down to super users
+router.get("/subscriptions", getStripeSubscriptions); // TODO: lock this down to super users
+router.get("/products", getStripeProducts); // TODO: lock this down to super users
+router.get("/subscription-status", getSubscriptionStatus);
 
 export default router;

@@ -28,7 +28,6 @@ export const authMiddleware: RequestHandler = async (req, res, next) => {
     // Continue
     return next();
   } catch (e) {
-    console.error("ERROR!!", e);
     const errorMessage = extractErrorMessage(e);
 
     // Handle expired token error

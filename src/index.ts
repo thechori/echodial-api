@@ -45,7 +45,7 @@ app.use("/trial-credit", authMiddleware, trialCreditRouter);
 
 // Error handling middleware (via express-async-errors)
 app.use((err: any, req: Request, res: Response, next: any) => {
-  res.send({ message: extractErrorMessage(err) });
+  res.status(400).send({ message: extractErrorMessage(err) });
   next(err);
 });
 

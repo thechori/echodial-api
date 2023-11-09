@@ -2,7 +2,6 @@ import db from "../../utils/db";
 import { CallerId } from "../../types";
 import { Request, Response } from "express";
 import twilioClient from "../../services/twilio";
-import { extractErrorMessage } from "../../utils/error";
 
 // We can query the `From` number in order to filter Call records
 export const getCallUsage = async (req: Request, res: Response) => {
@@ -18,24 +17,19 @@ export const getCallUsage = async (req: Request, res: Response) => {
 
   // TODO: support multiple caller ids
   // Get all Caller IDs associated with user id
-  try {
-    const callerId = await db<CallerId>("caller_id")
-      .where("user_id", id)
-      .first();
 
-    if (!callerId) {
-      return res.status(400).send({ message: "No caller ID found" });
-    }
+  const callerId = await db<CallerId>("caller_id").where("user_id", id).first();
 
-    // Find all Twilio Call records using the From number in the CallerId
-    const calls = await twilioClient.calls.list({
-      from: callerId.phone_number,
-      startTimeAfter: startTime,
-      endTimeBefore: endTime,
-    });
-
-    return res.status(200).send(calls);
-  } catch (e) {
-    return res.status(400).send({ message: extractErrorMessage(e) });
+  if (!callerId) {
+    throw Error("No caller ID found");
   }
+
+  // Find all Twilio Call records using the From number in the CallerId
+  const calls = await twilioClient.calls.list({
+    from: callerId.phone_number,
+    startTimeAfter: startTime,
+    endTimeBefore: endTime,
+  });
+
+  return res.status(200).send(calls);
 };

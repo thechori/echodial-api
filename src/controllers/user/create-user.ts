@@ -7,8 +7,9 @@ import { isValidEmailAddress } from "../../utils/validators/email";
 import { saltRounds } from "../../configs/auth";
 import envConfig from "../../configs/env";
 import db from "../../utils/db";
-import { User } from "../../types";
+import { TrialCredit, User } from "../../types";
 import { extractErrorMessage } from "../../utils/error";
+import { DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS } from "../../configs/app";
 
 const stripe = new Stripe(envConfig.stripeApiKey);
 
@@ -72,6 +73,19 @@ export const createUser = async (req: Request, res: Response) => {
       })
       .where("id", newUser[0].id)
       .returning("*");
+
+    // Create new trial credit record
+    const [newTrialCredit] = await db<TrialCredit>("trial_credit")
+      .insert({
+        user_id: updatedUser[0].id,
+        initial_amount: DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS,
+        remaining_amount: DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS,
+      })
+      .returning("*");
+
+    if (!newTrialCredit) {
+      throw Error("Error creating new trial credit record");
+    }
 
     return res
       .status(201)

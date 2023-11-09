@@ -7,16 +7,18 @@ import { User } from "../../types";
 
 const stripe = new Stripe(envConfig.stripeApiKey);
 
-type TAccountStatus = {
-  subscription: null | "standard" | "pro" | "unlimited";
+type TSubscriptionStatus = {
+  description: string | null;
+  status: Stripe.Subscription.Status | null;
+  items: Stripe.ApiList<Stripe.SubscriptionItem> | null;
 };
 
 // Returns
 // `null` if no trial or subscription
 // `number` of days remaining
-export const getAccountStatus = async (
+export const getSubscriptionStatus = async (
   req: Request,
-  res: Response<TAccountStatus | { message: string }>,
+  res: Response<TSubscriptionStatus | { message: string }>,
 ) => {
   // Extract User ID
   const { id } = res.locals.jwt_decoded;
@@ -31,7 +33,9 @@ export const getAccountStatus = async (
   // Handle no subscription
   if (user.stripe_subscription_id === null) {
     return res.status(200).send({
-      subscription: null,
+      status: null,
+      description: "No subscription found",
+      items: null,
     });
   }
 
@@ -43,13 +47,15 @@ export const getAccountStatus = async (
   // Handle no subscription found
   if (!subscription) {
     return res.status(200).send({
-      subscription: null,
+      status: null,
+      description: "No subscription found",
+      items: null,
     });
   }
 
-  console.log("subscription", subscription);
-
   res.status(200).send({
-    subscription: "unlimited",
+    status: subscription.status,
+    description: subscription.description,
+    items: subscription.items,
   });
 };
