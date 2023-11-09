@@ -80,7 +80,7 @@ router.post("/", async (req, res) => {
     if (existingRecord) {
       return res.status(400).send({
         message:
-          "An error occurred when creating the LeadCustomProperty record",
+          "This label already exists",
       });
     }
     const newLeadCustomProperty = await db("lead_custom_property")
