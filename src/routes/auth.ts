@@ -35,14 +35,18 @@ router.post("/sign-in", async (req, res) => {
   const user = await db<User>("user").where("email", emailClean).first();
 
   if (!user) {
-    return res.status(400).json({ message: "Email not found" });
+    return res
+      .status(400)
+      .json({ message: "Email and password combination not found" });
   }
 
   // Hash password and compare to password_hash in DB record
   const isMatch = await bcrypt.compare(password, user.password_hash);
 
   if (!isMatch) {
-    return res.status(403).json({ message: "Incorrect password" });
+    return res
+      .status(403)
+      .json({ message: "Email and password combination not found" });
   }
 
   // Generate JWT
