@@ -11,6 +11,7 @@ import {
   transformPhoneNumberForDb,
 } from "../utils/validators/phone";
 import { authMiddleware } from "../middlewares/auth";
+import leadStatusRouter from "./lead.status";
 import leadStandardPropertyRouter from "./lead.property.standard";
 import leadCustomPropertyRouter from "./lead.property.custom";
 import leadPropertyGroupRouter from "./lead.property.group";
@@ -23,6 +24,8 @@ const router = Router({ mergeParams: true });
 
 // Nested routers
 // Note: Placement of this mattered -- the endpoint would crash when this was beneath the current router definitions
+router.use("/status", authMiddleware, leadStatusRouter);
+//
 router.use("/property/standard", authMiddleware, leadStandardPropertyRouter);
 router.use("/property/custom", authMiddleware, leadCustomPropertyRouter);
 router.use("/property/type", authMiddleware, leadPropertyTypeRouter);
@@ -32,7 +35,7 @@ router.use("/property/group", authMiddleware, leadPropertyGroupRouter);
 router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
 
-  const leads = await db("lead").where({
+  const leads = await db<Lead>("lead").where({
     user_id: id,
   });
 
@@ -47,9 +50,7 @@ router.get("/:id", async (req, res) => {
     return res.status(400).send("Missing `id` parameter");
   }
 
-  const leads = await db("lead").where({
-    id,
-  });
+  const leads = await db<Lead>("lead").where("id", id);
 
   if (leads.length !== 1) {
     return res.status(400).send({
@@ -79,7 +80,7 @@ router.put("/:id", async (req, res) => {
   }
 
   try {
-    const updatedLeads = await db("lead")
+    const updatedLeads = await db<Lead>("lead")
       .where("id", id)
       .update({
         ...body,
@@ -118,7 +119,7 @@ router.patch("/:id", async (req, res) => {
   }
 
   try {
-    const updatedLeads = await db("lead")
+    const updatedLeads = await db<Lead>("lead")
       .where("id", id)
       .update({
         ...body,
@@ -148,7 +149,7 @@ router.delete("/:id", async (req, res) => {
   }
 
   try {
-    const deletionResult = await db("lead").del().where("id", id);
+    const deletionResult = await db<Lead>("lead").del().where("id", id);
     return res.status(200).send(deletionResult);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
@@ -164,7 +165,7 @@ router.post("/bulk-delete", async (req, res) => {
   }
 
   try {
-    const rowsDeletedCount = await db("lead").whereIn("id", ids).del();
+    const rowsDeletedCount = await db<Lead>("lead").whereIn("id", ids).del();
     return res.status(200).json({
       message: `Deleted ${rowsDeletedCount} rows`,
       data: rowsDeletedCount,
@@ -191,7 +192,7 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const newLead = await db("lead").insert({
+    const newLead = await db<Lead>("lead").insert({
       user_id: id,
       email,
       phone: phoneNumberForDb, // Note: Hardcoding country code for best UX
@@ -253,7 +254,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
         return res
           .status(400)
           .send(
-            "CSV file corrupted. Please check the structure (e.g., column names) upload another one."
+            "CSV file corrupted. Please check the structure (e.g., column names) upload another one.",
           );
       }
 
@@ -287,7 +288,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
           // Validate phone number
           if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
             throw new Error(
-              `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`
+              `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`,
             );
           }
 
@@ -302,7 +303,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
         });
 
         // Insert into DB
-        await db("lead").insert(leadsToInsert);
+        await db<Lead>("lead").insert(leadsToInsert);
         res.status(200).json({
           message: `Successfully uploaded ${fileRows.length} leads`,
           data: fileRows,
@@ -317,7 +318,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
 });
 
 router.get("/pretty", async (req, res) => {
-  const leads = await db("lead")
+  const leads = await db<Lead>("lead")
     .join("person", "person_id", "person.id")
     .join("campaign", "campaign_id", "campaign.id")
     .select(
@@ -325,13 +326,14 @@ router.get("/pretty", async (req, res) => {
       "lead.created_at",
       "lead.body as message",
       "person.phone as person_phone",
-      "campaign.name as campaign_name"
+      "campaign.name as campaign_name",
     );
   res.status(200).send(leads);
 });
 
 router.post("/csv/validate", upload.single("file"), async (req, res) => {
-  const { id } = res.locals.jwt_decoded;
+  // Extract user ID
+  // const { id } = res.locals.jwt_decoded;
   const { mapping_data } = req.body;
 
   // Validate mapping_data
@@ -349,11 +351,11 @@ router.post("/csv/validate", upload.single("file"), async (req, res) => {
 });
 
 // Designating this as /csv/v2 to allow the current endpoint to continue functioning until this is 100% ready and we can decommission the original
-router.post("/csv/v2", upload.single("file"), async (req, res) => {
-  // Validate via logic from /csv/validate endpoint (extract this logic out into a function so it can be easily reused by both routes)
-  // TODO
-  // Insert into DB
-  // TODO
-});
+// router.post("/csv/v2", upload.single("file"), async (req, res) => {
+// Validate via logic from /csv/validate endpoint (extract this logic out into a function so it can be easily reused by both routes)
+// TODO
+// Insert into DB
+// TODO
+// });
 
 export default router;

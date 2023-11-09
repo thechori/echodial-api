@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run linter to check for common errors
+npm run lint
+
+# Run Prettier to format code
+npm run pretty-quick
+
+# Generate types from DB schema
+npm run generate-types:dev

@@ -10,7 +10,7 @@ const router = Router({ mergeParams: true });
 router.get("/", async (req, res) => {
   try {
     const leadStandardProperties: LeadPropertyGroup[] = await db(
-      "lead_property_group"
+      "lead_property_group",
     );
     return res.status(200).send(leadStandardProperties);
   } catch (e) {

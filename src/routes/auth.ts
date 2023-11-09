@@ -1,4 +1,4 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
@@ -6,34 +6,17 @@ import crypto from "crypto";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
-import { authMiddleware } from "../middlewares/auth";
 import { sesClient } from "../services/ses-client";
 import { createSendEmailCommand } from "../utils/email";
 import envConfig from "../configs/env";
-import { PasswordResetToken } from "../types";
+import { PasswordResetToken, User } from "../types";
 import { saltRounds } from "../configs/auth";
 import { passwordResetTokenExpirationInMinutes } from "../configs/auth";
 import { differenceInMinutes } from "date-fns";
+
 dotenv.config();
 
 const router = Router();
-
-// Endpoint is mostly for capturing user behavior, the heavy work is done on the client when they clear the local storage item
-router.get("/sign-out", authMiddleware, async (req: Request, res: Response) => {
-  const { jwt } = res.locals;
-  if (!jwt) {
-    return res.status(400).send("no jwt found");
-  }
-
-  const { id } = jwt;
-
-  // await db("user_event").insert({
-  //   user_id: id,
-  //   user_event_type_id: 4, // id 4 = "sign-out"
-  // });
-
-  return res.status(200).send();
-});
 
 // Sign in
 router.post("/sign-in", async (req, res) => {
@@ -50,17 +33,21 @@ router.post("/sign-in", async (req, res) => {
   const emailClean = email.trim().toLowerCase();
 
   // Look up email in DB
-  const user = await db("user").where("email", emailClean).first();
+  const user = await db<User>("user").where("email", emailClean).first();
 
   if (!user) {
-    return res.status(400).json({ message: "Email not found" });
+    return res
+      .status(400)
+      .json({ message: "Email and password combination not found" });
   }
 
   // Hash password and compare to password_hash in DB record
   const isMatch = await bcrypt.compare(password, user.password_hash);
 
   if (!isMatch) {
-    return res.status(403).json({ message: "Incorrect password" });
+    return res
+      .status(403)
+      .json({ message: "Email and password combination not found" });
   }
 
   // Generate JWT
@@ -71,7 +58,7 @@ router.post("/sign-in", async (req, res) => {
   res.status(200).json(token);
 
   // Record `user_event`
-  // await db("user_event").insert({
+  // await db<UserEvent>("user_event").insert({
   //   user_id: user.id,
   //   user_event_type_id: 3, // id 3 = "sign-in"
   // });
@@ -90,7 +77,7 @@ router.get("/authenticate", async (req, res) => {
   try {
     const decoded = await jwt.verify(
       token,
-      process.env.BCRYPT_SECRET as string
+      process.env.BCRYPT_SECRET as string,
     );
     return res.status(200).json({ message: "Success", data: decoded });
   } catch (e) {
@@ -118,7 +105,7 @@ router.post("/reset-password-request", async (req, res) => {
 
   try {
     // Look up email in DB
-    const user = await db("user").where("email", emailClean).first();
+    const user = await db<User>("user").where("email", emailClean).first();
 
     // User not found
     if (!user) {
@@ -126,14 +113,16 @@ router.post("/reset-password-request", async (req, res) => {
     }
 
     // Check for existing token
-    const existingPasswordResetToken = await db("password_reset_token")
+    const existingPasswordResetToken = await db<PasswordResetToken>(
+      "password_reset_token",
+    )
       .where("user_id", user.id)
       .first();
     console.log("existingPasswordResetToken: ", existingPasswordResetToken);
 
     if (existingPasswordResetToken) {
       // Delete if found
-      const deletedToken = await db("password_reset_token")
+      const deletedToken = await db<PasswordResetToken>("password_reset_token")
         .del()
         .where("id", existingPasswordResetToken.id);
       console.log("deletedToken", deletedToken);
@@ -147,14 +136,16 @@ router.post("/reset-password-request", async (req, res) => {
     };
 
     // Insert into database
-    const newPasswordResetToken = await db("password_reset_token")
+    const newPasswordResetToken = await db<PasswordResetToken>(
+      "password_reset_token",
+    )
       .insert(newPasswordResetTokenContent)
       .returning("*");
 
     // Handle errors
     if (newPasswordResetToken.length !== 1) {
       return console.error(
-        "An error occurred when creating a single new PasswordResetToken record"
+        "An error occurred when creating a single new PasswordResetToken record",
       );
     }
 
@@ -204,7 +195,9 @@ router.get("/reset-password-token/:token", async (req, res) => {
     return res.status(400).send({ message: "Missing `token` field" });
   }
 
-  const passwordResetToken = await db("password_reset_token")
+  const passwordResetToken = await db<PasswordResetToken>(
+    "password_reset_token",
+  )
     .where("token", token)
     .first();
 
@@ -213,13 +206,15 @@ router.get("/reset-password-token/:token", async (req, res) => {
     return res.status(400).send({
       message: "An error occurred when fetching the password reset token",
     });
-  } 
+  }
 
-  
-  const timeElapsed = differenceInMinutes(new Date().getTime(), passwordResetToken.created_at.getTime());
+  const timeElapsed = differenceInMinutes(
+    new Date().getTime(),
+    passwordResetToken.created_at.getTime(),
+  );
   // Checks for stale token
   if (timeElapsed > passwordResetTokenExpirationInMinutes) {
-    const deletedToken = await db("password_reset_token")
+    const deletedToken = await db<PasswordResetToken>("password_reset_token")
       .del()
       .where("id", passwordResetToken.id);
 
@@ -231,12 +226,13 @@ router.get("/reset-password-token/:token", async (req, res) => {
     }
     return res.status(400).send({
       message: "Password reset link has expired, please request a new one",
-    })
+    });
   }
-  
 
   // Look up user via id to fetch email
-  const user = await db("user").where("id", passwordResetToken.user_id).first();
+  const user = await db<User>("user")
+    .where("id", passwordResetToken.user_id)
+    .first();
 
   if (!user) {
     return res.status(400).send({
@@ -267,7 +263,7 @@ router.post("/reset-password", async (req, res) => {
 
   try {
     // Find token
-    const foundToken = await db("password_reset_token")
+    const foundToken = await db<PasswordResetToken>("password_reset_token")
       .where("token", token)
       .first();
 
@@ -278,13 +274,16 @@ router.post("/reset-password", async (req, res) => {
       });
     }
 
-    const timeElapsed = differenceInMinutes(new Date().getTime(), foundToken.created_at.getTime());
+    const timeElapsed = differenceInMinutes(
+      new Date().getTime(),
+      foundToken.created_at.getTime(),
+    );
     // Checks for stale token
     if (timeElapsed > passwordResetTokenExpirationInMinutes) {
-      const deletedToken = await db("password_reset_token")
+      const deletedToken = await db<PasswordResetToken>("password_reset_token")
         .del()
         .where("id", foundToken.id);
-  
+
       // Handle error
       if (!deletedToken) {
         return res.status(400).send({
@@ -293,14 +292,14 @@ router.post("/reset-password", async (req, res) => {
       }
       return res.status(400).send({
         message: "Password reset link has expired, please request a new one",
-      })
+      });
     }
 
     // Hash password before inserting to DB
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
     // Update user optimistically, we're assuming the email passed in is valid if the token is valid
-    const updatedUser = await db("user")
+    const updatedUser = await db<User>("user")
       .where("email", email)
       .update({
         password_hash: passwordHash,
@@ -315,7 +314,7 @@ router.post("/reset-password", async (req, res) => {
     }
 
     // Delete the ResetPasswordToken
-    const deletedToken = await db("password_reset_token")
+    const deletedToken = await db<PasswordResetToken>("password_reset_token")
       .del()
       .where("id", foundToken.id);
 

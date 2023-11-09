@@ -11,7 +11,7 @@ function tokenGenerator(user_id: number) {
     envConfig.apiSecret,
     {
       identity: user_id_string,
-    }
+    },
   );
 
   const grant = new VoiceGrant({
