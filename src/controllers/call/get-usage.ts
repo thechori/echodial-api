@@ -5,7 +5,7 @@ import twilioClient from "../../services/twilio";
 
 // We can query the `From` number in order to filter Call records
 export const getCallUsage = async (req: Request, res: Response) => {
-  // Extract Call ID
+  // Extract user id
   const { id } = res.locals.jwt_decoded;
 
   // Pagination details - use `client.page` instead of `client.list` to support this
