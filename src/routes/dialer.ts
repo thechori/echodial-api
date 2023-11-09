@@ -16,23 +16,6 @@ router.post("/", async (req, res) => {
   // Send response immediately
   res.set("Content-Type", "text/xml");
   res.send(voiceResponse(req.body));
-
-  // const { Identity, From, To } = req.body; // Identity is undefined .. need to find another way to do this
-  // Store in DB
-  // try {
-  //   const newCall: Partial<Call> = {
-  //     user_id: Identity, // Set as user_id to obtain information about whose making the call
-  //     from_number: From,
-  //     to_number: To,
-  //     // "lead_id": // TODO: Add this
-  //   };
-  //   const dbResult = await db<Call>("call").insert(newCall);
-  //   console.log("dbResult", dbResult);
-
-  //   return res;
-  // } catch (e) {
-  //   console.error(extractErrorMessage(e));
-  // }
 });
 
 function voiceResponse(requestBody: any) {
