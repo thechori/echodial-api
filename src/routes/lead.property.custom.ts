@@ -14,18 +14,18 @@ router.get("/", async (req, res) => {
   try {
     // Only return custom properties that have been created by the specific user
     const leadCustomProperties: LeadCustomProperty[] = await db(
-      "lead_custom_property"
+      "lead_custom_property",
     )
       .where("user_id", id)
       .join(
         "lead_property_group",
         "lead_property_group_id",
-        "lead_property_group.id"
+        "lead_property_group.id",
       )
       .join(
         "lead_property_type",
         "lead_property_type_id",
-        "lead_property_type.id"
+        "lead_property_type.id",
       )
       .select(
         "lead_custom_property.id as id",
@@ -38,7 +38,7 @@ router.get("/", async (req, res) => {
         "lead_property_group.name as lead_property_group_name",
 
         "lead_property_type.id as lead_property_type_id",
-        "lead_property_type.name as lead_property_type_name"
+        "lead_property_type.name as lead_property_type_name",
       );
     return res.status(200).send(leadCustomProperties);
   } catch (e) {
@@ -73,17 +73,9 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    const existingRecord = await db("lead_custom_property")
-    .where("label", label)
-    .first();
-
-    if (existingRecord) {
-      return res.status(400).send({
-        message:
-          "This label already exists",
-      });
-    }
-    const newLeadCustomProperty = await db("lead_custom_property")
+    const newLeadCustomProperty = await db<LeadCustomProperty>(
+      "lead_custom_property",
+    )
       .insert({
         user_id: id,
         lead_property_group_id,

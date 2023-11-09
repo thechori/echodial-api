@@ -16,23 +16,6 @@ router.post("/", async (req, res) => {
   // Send response immediately
   res.set("Content-Type", "text/xml");
   res.send(voiceResponse(req.body));
-
-  // const { Identity, From, To } = req.body; // Identity is undefined .. need to find another way to do this
-  // Store in DB
-  // try {
-  //   const newCall: Partial<Call> = {
-  //     user_id: Identity, // Set as user_id to obtain information about whose making the call
-  //     from_number: From,
-  //     to_number: To,
-  //     // "lead_id": // TODO: Add this
-  //   };
-  //   const dbResult = await db("call").insert(newCall);
-  //   console.log("dbResult", dbResult);
-
-  //   return res;
-  // } catch (e) {
-  //   console.error(extractErrorMessage(e));
-  // }
 });
 
 function voiceResponse(requestBody: any) {
@@ -40,12 +23,12 @@ function voiceResponse(requestBody: any) {
   const callerId = requestBody.From;
   const identity = requestBody.Identity;
 
-  let twiml = new VoiceResponse();
+  const twiml = new VoiceResponse();
 
   // If the request to the /voice endpoint is TO your Twilio Number,
   // then it is an incoming call towards your Twilio.Device.
   if (toNumberOrClientName == callerId) {
-    let dial = twiml.dial();
+    const dial = twiml.dial();
 
     // This will connect the caller with your Twilio.Device/client
     dial.client(identity);
@@ -53,7 +36,7 @@ function voiceResponse(requestBody: any) {
     // This is an outgoing call
 
     // set the callerId
-    let dial = twiml.dial({ callerId, answerOnBridge: true });
+    const dial = twiml.dial({ callerId, answerOnBridge: true });
 
     // Check if the 'To' parameter is a Phone Number or Client Name
     // in order to use the appropriate TwiML noun

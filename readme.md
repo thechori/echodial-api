@@ -11,9 +11,10 @@ Node.js Express backend for the EchoDial product
 ## Getting Started
 
 1. Create the `.env` file at the root, obtain contents from [Ryan Teodoro](ryan@echodial.com)
-2. Install dependencies (`npm install`)
-3. Run app (`npm run dev`)
-4. Visit at `http://localhost:3001` (unless you've changed the `PORT` variable in the `.env` file)
+1. Install dependencies (`npm install`)
+1. Install husky to support pre-commit hooks (`./node_modules/.bin/husky install`)
+1. Run app (`npm run dev`)
+1. Visit at `http://localhost:3001` (unless you've changed the `PORT` variable in the `.env` file)
 
 ## Development
 
@@ -44,3 +45,4 @@ _TODO: Update docs once multiple environments are setup_
 - To run migrations (to latest): `knex migrate:latest --env [ENV]`
 - We must drop foreign keys before we alter them -- this was the case in the migration for updating the `.onDelete` action for the different columns. Simply altering the columns resulted in an error, but running `table.dropForeign("user_id")` first allowed this action to continue
 - Found out knex does not actually support the timestamps functionality for `updated_at` ... so we have to do this manually. See `src/routes/leads.ts` within the PUT handler
+- Pre-commit hooks sometimes fail -- this seems to happen when prettier runs and finds more changes and they need to be added to the staging area. If this step fails, simply run `git add .` and then run the commit again, and it should work
