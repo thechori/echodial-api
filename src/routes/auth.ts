@@ -13,6 +13,7 @@ import { PasswordResetToken, User } from "../types";
 import { saltRounds } from "../configs/auth";
 import { passwordResetTokenExpirationInMinutes } from "../configs/auth";
 import { differenceInMinutes } from "date-fns";
+
 dotenv.config();
 
 const router = Router();
