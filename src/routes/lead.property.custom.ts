@@ -6,7 +6,6 @@ import { LeadCustomProperty } from "../types";
 import { createValueFromLabel } from "../utils/helpers/create-value-from-label";
 
 const router = Router({ mergeParams: true });
-
 // Return LeadCustomProperty items
 router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
@@ -95,7 +94,39 @@ router.post("/", async (req, res) => {
 
     return res.status(200).send(newLeadCustomProperty[0]);
   } catch (e) {
+    if ((e as { code: string }).code === '23505') {
+      res.status(500).send({message: "Custom property already exists"})
+    }
+
     return res.status(500).send({ message: extractErrorMessage(e) });
+  }
+});
+
+//Delete a Custom Property
+router.delete("/:name", async (req, res) => {
+  const { id } = res.locals.jwt_decoded;
+  const { name } =
+    req.params;
+  try {
+    // Check if the LeadCustomProperty exists
+    const existingLeadCustomProperty = await db<LeadCustomProperty>(
+      'lead_custom_property'
+    )
+      .where({ user_id: id, name })
+      .first();
+
+    if (!existingLeadCustomProperty) {
+      return res.status(404).json({ message: 'LeadCustomProperty not found' });
+    }
+
+    // Delete the LeadCustomProperty
+    await db<LeadCustomProperty>('lead_custom_property')
+      .where({ user_id: id, name })
+      .del();
+
+    return res.status(200).json({ message: 'Successfully deleted!' }); 
+  } catch (error) {
+    return res.status(500).json({ message: 'Internal Server Error' });
   }
 });
 
