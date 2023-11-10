@@ -159,7 +159,7 @@ export type LeadCustomProperty = {
   lead_property_group_id: number;
   lead_property_type_id: number;
   name: string;
-  label: string;
+  label: string | null;
   description: string | null;
 };
 

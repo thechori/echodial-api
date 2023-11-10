@@ -28,8 +28,8 @@ export const superUserAuthMiddleware: RequestHandler = async (
 
     // TODO: create DB table of super users and check to see if this user is in that group
     // Validate person is a Super User
-    const { id } = jwt_decoded;
-    if (id !== -1) {
+    const { email } = jwt_decoded;
+    if (email !== "thechori@gmail.com") {
       return res.status(500).send({ message: "Super user access required" });
     }
 
