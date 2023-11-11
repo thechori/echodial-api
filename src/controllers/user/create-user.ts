@@ -55,21 +55,9 @@ export const createUser = async (req: Request, res: Response) => {
       phone: phone,
     });
 
-    const stripeSubscription = await stripe.subscriptions.create({
-      customer: stripeCustomer.id,
-      trial_period_days: 7,
-      items: [
-        {
-          price: "price_1NvS4dKGxd0U3zJwIewutyC0", // (test) Standard plan - $69.99
-          // price: "price_1O8pAnKGxd0U3zJwosJYrkY8", // (live) Dollar Donation Club
-        },
-      ],
-    });
-
     const updatedUser = await db<User>("user")
       .update({
         stripe_customer_id: stripeCustomer.id,
-        stripe_subscription_id: stripeSubscription.id,
       })
       .where("id", newUser[0].id)
       .returning("*");
