@@ -3,7 +3,7 @@ import bcrypt from "bcrypt";
 //
 import { isValidPhoneNumberForDb } from "../../utils/validators/phone";
 import { isValidEmailAddress } from "../../utils/validators/email";
-import { saltRounds } from "../../configs/auth";
+import { SALT_ROUNDS } from "../../configs/auth";
 import db from "../../utils/db";
 import { TrialCredit, User } from "../../types";
 import { extractErrorMessage } from "../../utils/error";
@@ -31,7 +31,7 @@ export const createUser = async (req: Request, res: Response) => {
 
   try {
     // Hash password before inserting to DB
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Run DB query
     const [newUser] = await db<User>("user")

@@ -19,23 +19,34 @@ export const getSubscriptionStatus = async (
   res: Response<TSubscriptionStatus | { message: string }>,
 ) => {
   // Extract User email
-  const { email } = res.locals.jwt_decoded;
+  const { email, stripe_customer_id } = res.locals.jwt_decoded;
 
-  // Get all Stripe Customers
-  const customers = await stripe.customers.list({
-    email: email,
-  });
+  // First, let's check to see if user has a stripe_customer_id (faster lookup since we don't have to query stripe Customer list)
+  let customerId = null;
 
-  if (!customers) throw Error("No Stripe customers found");
+  console.log("stripe_customer_id", stripe_customer_id);
 
-  // Find single customer using email
-  const customer = customers.data.find((c) => c.email === email);
+  if (stripe_customer_id) {
+    customerId = stripe_customer_id;
+  } else {
+    // Get all Stripe Customers
+    const customers = await stripe.customers.list({
+      email: email,
+    });
 
-  if (!customer) throw Error("No Stripe customer found with that email");
+    if (!customers) throw Error("No Stripe customers found");
+
+    // Find single customer using email
+    const customer = customers.data.find((c) => c.email === email);
+
+    if (!customer) throw Error("No Stripe customer found with that email");
+
+    customerId = customer.id;
+  }
 
   // Search for Subscription via Customer
   const subscriptions = await stripe.subscriptions.list({
-    customer: customer.id,
+    customer: customerId,
   });
 
   if (!subscriptions)

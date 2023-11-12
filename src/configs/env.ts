@@ -14,6 +14,7 @@ const envConfig = {
   apiSecret: "",
   messagingServiceSid: "",
   stripeApiKey: "",
+  bcryptSecret: "",
 };
 
 // Extract from runtime environment
@@ -27,6 +28,7 @@ const {
   TWILIO_AUTH_TOKEN,
   TWILIO_MESSAGING_SERVICE_SID,
   STRIPE_API_KEY,
+  BCRYPT_SECRET,
 } = process.env;
 
 // Handle missing values
@@ -39,7 +41,8 @@ if (
   !TWILIO_API_SECRET ||
   !TWILIO_AUTH_TOKEN ||
   !TWILIO_MESSAGING_SERVICE_SID ||
-  !STRIPE_API_KEY
+  !STRIPE_API_KEY ||
+  !BCRYPT_SECRET
 ) {
   throw "missing field from .env file";
 }
@@ -65,6 +68,8 @@ envConfig.apiKey = TWILIO_API_KEY;
 envConfig.apiSecret = TWILIO_API_SECRET;
 
 envConfig.stripeApiKey = STRIPE_API_KEY;
+
+envConfig.bcryptSecret = BCRYPT_SECRET;
 
 // Export configuration object
 export default envConfig;

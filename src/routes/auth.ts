@@ -1,5 +1,4 @@
 import { Router } from "express";
-import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -10,11 +9,13 @@ import { sesClient } from "../services/ses-client";
 import { createSendEmailCommand } from "../utils/email";
 import envConfig from "../configs/env";
 import { PasswordResetToken, User } from "../types";
-import { saltRounds } from "../configs/auth";
-import { passwordResetTokenExpirationInMinutes } from "../configs/auth";
+import {
+  ACCESS_TOKEN_EXPIRES_IN,
+  REFRESH_TOKEN_EXPIRES_IN,
+  SALT_ROUNDS,
+} from "../configs/auth";
+import { PASSWORD_RESET_TOKEN_EXPIRATION_IN_MINUTES } from "../configs/auth";
 import { differenceInMinutes } from "date-fns";
-
-dotenv.config();
 
 const router = Router();
 
@@ -24,9 +25,7 @@ router.post("/sign-in", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res
-      .status(400)
-      .json({ message: "Please provide an email and password" });
+    throw Error("Please provide an email and password");
   }
 
   // Cleanse email input (lowercase/trim)
@@ -36,26 +35,31 @@ router.post("/sign-in", async (req, res) => {
   const user = await db<User>("user").where("email", emailClean).first();
 
   if (!user) {
-    return res
-      .status(400)
-      .json({ message: "Email and password combination not found" });
+    throw Error("Email and password combination not found");
   }
 
   // Hash password and compare to password_hash in DB record
   const isMatch = await bcrypt.compare(password, user.password_hash);
 
   if (!isMatch) {
-    return res
-      .status(403)
-      .json({ message: "Email and password combination not found" });
+    throw Error("Email and password combination not found");
   }
 
-  // Generate JWT
-  const token = jwt.sign(user, process.env.BCRYPT_SECRET as string, {
-    expiresIn: "7d",
+  // Generate access and refresh tokens
+  const refreshToken = jwt.sign(user, envConfig.bcryptSecret, {
+    expiresIn: REFRESH_TOKEN_EXPIRES_IN,
+  });
+  const accessToken = jwt.sign(user, envConfig.bcryptSecret, {
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN,
   });
 
-  res.status(200).json(token);
+  res
+    .status(200)
+    .cookie("refresh_token", refreshToken, {
+      httpOnly: true,
+      sameSite: "strict",
+    })
+    .json(accessToken);
 
   // Record `user_event`
   // await db<UserEvent>("user_event").insert({
@@ -64,25 +68,23 @@ router.post("/sign-in", async (req, res) => {
   // });
 });
 
-// Authenticate
-router.get("/authenticate", async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
+// Refresh access_token using refresh_token in cookie
+router.get("/refresh-token", async (req, res) => {
+  const refreshToken = req.cookies["refreshToken"];
 
-  if (!token) {
-    return res
-      .status(403)
-      .json({ message: "A token is required for authentication" });
-  }
+  if (!refreshToken) throw Error("Refresh token not found");
 
-  try {
-    const decoded = await jwt.verify(
-      token,
-      process.env.BCRYPT_SECRET as string,
-    );
-    return res.status(200).json({ message: "Success", data: decoded });
-  } catch (e) {
-    return res.status(500).json({ message: extractErrorMessage(e) });
-  }
+  console.log("refreshToken", refreshToken);
+
+  const decoded = jwt.verify(refreshToken, envConfig.bcryptSecret);
+
+  console.log("decoded", decoded);
+
+  const accessToken = jwt.sign(decoded, envConfig.bcryptSecret, {
+    expiresIn: ACCESS_TOKEN_EXPIRES_IN,
+  });
+
+  res.header("Authorization", accessToken).send(decoded);
 });
 
 // Request password reset
@@ -93,7 +95,7 @@ router.post("/reset-password-request", async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
-    return res.status(403).json({ message: "Email is missing" });
+    throw Error("Email is missing");
   }
 
   // Send a success 200 response -- we don't need to inform the user if the email is found
@@ -192,7 +194,7 @@ router.get("/reset-password-token/:token", async (req, res) => {
   const { token } = req.params;
   // Check for missing field
   if (!token) {
-    return res.status(400).send({ message: "Missing `token` field" });
+    throw Error("Missing `token` field");
   }
 
   const passwordResetToken = await db<PasswordResetToken>(
@@ -203,9 +205,7 @@ router.get("/reset-password-token/:token", async (req, res) => {
 
   // Handle error
   if (!passwordResetToken) {
-    return res.status(400).send({
-      message: "An error occurred when fetching the password reset token",
-    });
+    throw Error("An error occurred when fetching the password reset token");
   }
 
   const timeElapsed = differenceInMinutes(
@@ -213,20 +213,17 @@ router.get("/reset-password-token/:token", async (req, res) => {
     passwordResetToken.created_at.getTime(),
   );
   // Checks for stale token
-  if (timeElapsed > passwordResetTokenExpirationInMinutes) {
+  if (timeElapsed > PASSWORD_RESET_TOKEN_EXPIRATION_IN_MINUTES) {
     const deletedToken = await db<PasswordResetToken>("password_reset_token")
       .del()
       .where("id", passwordResetToken.id);
 
     // Handle error
     if (!deletedToken) {
-      return res.status(400).send({
-        message: "Error deleting password reset token",
-      });
+      throw Error("Error deleting password reset token");
     }
-    return res.status(400).send({
-      message: "Password reset link has expired, please request a new one",
-    });
+
+    throw Error("Password reset link has expired, please request a new one");
   }
 
   // Look up user via id to fetch email
@@ -235,10 +232,9 @@ router.get("/reset-password-token/:token", async (req, res) => {
     .first();
 
   if (!user) {
-    return res.status(400).send({
-      message:
-        "An error occurred when fetching the user associated with the password reset token",
-    });
+    throw Error(
+      "An error occurred when fetching the user associated with the password reset token",
+    );
   }
 
   return res.status(200).send(user.email);
@@ -250,85 +246,67 @@ router.post("/reset-password", async (req, res) => {
 
   // Check for missing fields
   if (!token || !password || !email) {
-    return res
-      .status(400)
-      .send({ message: "Missing `token` or `password` or `email` field" });
+    throw Error("Missing `token` or `password` or `email` field");
   }
   // Validate password
   if (password.length < 6) {
-    return res
-      .status(400)
-      .send({ message: "Password must be at least 6 characters long" });
+    throw Error("Password must be at least 6 characters long");
   }
 
-  try {
-    // Find token
-    const foundToken = await db<PasswordResetToken>("password_reset_token")
-      .where("token", token)
-      .first();
+  // Find token
+  const foundToken = await db<PasswordResetToken>("password_reset_token")
+    .where("token", token)
+    .first();
 
-    // Handle error
-    if (!foundToken) {
-      return res.status(400).send({
-        message: "No password reset token found",
-      });
-    }
+  // Handle error
+  if (!foundToken) {
+    throw Error("No password reset token found");
+  }
 
-    const timeElapsed = differenceInMinutes(
-      new Date().getTime(),
-      foundToken.created_at.getTime(),
-    );
-    // Checks for stale token
-    if (timeElapsed > passwordResetTokenExpirationInMinutes) {
-      const deletedToken = await db<PasswordResetToken>("password_reset_token")
-        .del()
-        .where("id", foundToken.id);
-
-      // Handle error
-      if (!deletedToken) {
-        return res.status(400).send({
-          message: "Error deleting password reset token",
-        });
-      }
-      return res.status(400).send({
-        message: "Password reset link has expired, please request a new one",
-      });
-    }
-
-    // Hash password before inserting to DB
-    const passwordHash = await bcrypt.hash(password, saltRounds);
-
-    // Update user optimistically, we're assuming the email passed in is valid if the token is valid
-    const updatedUser = await db<User>("user")
-      .where("email", email)
-      .update({
-        password_hash: passwordHash,
-      })
-      .returning("*");
-
-    // Handle error
-    if (!updatedUser) {
-      return res.status(400).send({
-        message: "No user found",
-      });
-    }
-
-    // Delete the ResetPasswordToken
+  const timeElapsed = differenceInMinutes(
+    new Date().getTime(),
+    foundToken.created_at.getTime(),
+  );
+  // Checks for stale token
+  if (timeElapsed > PASSWORD_RESET_TOKEN_EXPIRATION_IN_MINUTES) {
     const deletedToken = await db<PasswordResetToken>("password_reset_token")
       .del()
       .where("id", foundToken.id);
 
     // Handle error
     if (!deletedToken) {
-      return res.status(400).send({
-        message: "Error deleting password reset token",
-      });
+      throw Error("Error deleting password reset token");
     }
-
-    return res.status(200).send();
-  } catch (e) {
-    return res.status(500).send({ message: extractErrorMessage(e) });
+    throw Error("Password reset link has expired, please request a new one");
   }
+
+  // Hash password before inserting to DB
+  const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+
+  // Update user optimistically, we're assuming the email passed in is valid if the token is valid
+  const updatedUser = await db<User>("user")
+    .where("email", email)
+    .update({
+      password_hash: passwordHash,
+    })
+    .returning("*");
+
+  // Handle error
+  if (!updatedUser) {
+    throw Error("No user found");
+  }
+
+  // Delete the ResetPasswordToken
+  const deletedToken = await db<PasswordResetToken>("password_reset_token")
+    .del()
+    .where("id", foundToken.id);
+
+  // Handle error
+  if (!deletedToken) {
+    throw Error("Error deleting password reset token");
+  }
+
+  return res.status(200).send();
 });
 
 export default router;

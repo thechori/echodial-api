@@ -1,2 +1,4 @@
-export const saltRounds = 10;
-export const passwordResetTokenExpirationInMinutes = 60;
+export const SALT_ROUNDS = 10;
+export const PASSWORD_RESET_TOKEN_EXPIRATION_IN_MINUTES = 60;
+export const ACCESS_TOKEN_EXPIRES_IN = "12h";
+export const REFRESH_TOKEN_EXPIRES_IN = "30d";
