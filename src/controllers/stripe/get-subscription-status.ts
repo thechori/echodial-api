@@ -2,8 +2,6 @@ import { Request, Response } from "express";
 import Stripe from "stripe";
 //
 import envConfig from "../../configs/env";
-import db from "../../utils/db";
-import { User } from "../../types";
 
 const stripe = new Stripe(envConfig.stripeApiKey);
 
@@ -13,45 +11,39 @@ type TSubscriptionStatus = {
   items: Stripe.ApiList<Stripe.SubscriptionItem> | null;
 };
 
-// Returns
-// `null` if no trial or subscription
-// `number` of days remaining
+// Note: Stripe does not give us an easy way to fetch a Subscription via a Customer email since the email field
+// is NOT a unique key. To do this, we first have to find all Customers by email, and then use the Customer ID
+// as a means to find the Subscription
 export const getSubscriptionStatus = async (
   req: Request,
   res: Response<TSubscriptionStatus | { message: string }>,
 ) => {
-  // Extract User ID
-  const { id } = res.locals.jwt_decoded;
+  // Extract User email
+  const { email } = res.locals.jwt_decoded;
 
-  // Search for User via ID
-  const user = await db<User>("user").where("id", id).first();
+  // Get all Stripe Customers
+  const customers = await stripe.customers.list({
+    email: email,
+  });
 
-  if (!user) {
-    return res.status(400).send({ message: "No user found" });
-  }
+  if (!customers) throw Error("No Stripe customers found");
 
-  // Handle no subscription
-  if (user.stripe_subscription_id === null) {
-    return res.status(200).send({
-      status: null,
-      description: "No subscription found",
-      items: null,
-    });
-  }
+  // Find single customer using email
+  const customer = customers.data.find((c) => c.email === email);
 
-  // Search for Subscription via stripe_subscription_id in User record
-  const subscription = await stripe.subscriptions.retrieve(
-    user.stripe_subscription_id,
-  );
+  if (!customer) throw Error("No Stripe customer found with that email");
 
-  // Handle no subscription found
-  if (!subscription) {
-    return res.status(200).send({
-      status: null,
-      description: "No subscription found",
-      items: null,
-    });
-  }
+  // Search for Subscription via Customer
+  const subscriptions = await stripe.subscriptions.list({
+    customer: customer.id,
+  });
+
+  if (!subscriptions)
+    throw Error("No Stripe subscription found with that customer id");
+
+  const subscription = subscriptions.data[0];
+
+  if (!subscription) throw Error("No Stripe subscription found");
 
   res.status(200).send({
     status: subscription.status,
