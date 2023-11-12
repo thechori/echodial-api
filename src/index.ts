@@ -6,6 +6,7 @@ require("express-async-errors");
 import express, { Request, Response } from "express";
 import cors from "cors";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 import morgan from "morgan";
 //
 import { authMiddleware } from "./middlewares/auth";
@@ -23,6 +24,7 @@ import { extractErrorMessage } from "./utils/error";
 
 const app = express();
 
+app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cors());

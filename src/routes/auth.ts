@@ -59,7 +59,7 @@ router.post("/sign-in", async (req, res) => {
       httpOnly: true,
       sameSite: "strict",
     })
-    .json(accessToken);
+    .send(accessToken);
 
   // Record `user_event`
   // await db<UserEvent>("user_event").insert({
@@ -70,7 +70,7 @@ router.post("/sign-in", async (req, res) => {
 
 // Refresh access_token using refresh_token in cookie
 router.get("/refresh-token", async (req, res) => {
-  const refreshToken = req.cookies["refreshToken"];
+  const refreshToken = req.cookies["refresh_token"];
 
   if (!refreshToken) throw Error("Refresh token not found");
 
@@ -79,6 +79,13 @@ router.get("/refresh-token", async (req, res) => {
   const decoded = jwt.verify(refreshToken, envConfig.bcryptSecret);
 
   console.log("decoded", decoded);
+
+  // TODO: Improve by adding `user` object to encapsulate the data
+  // Remove `iat` and `exp` from decoded token in order to set again
+  // @ts-ignore
+  delete decoded.iat;
+  // @ts-ignore
+  delete decoded.exp;
 
   const accessToken = jwt.sign(decoded, envConfig.bcryptSecret, {
     expiresIn: ACCESS_TOKEN_EXPIRES_IN,

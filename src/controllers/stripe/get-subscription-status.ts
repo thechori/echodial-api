@@ -18,13 +18,11 @@ export const getSubscriptionStatus = async (
   req: Request,
   res: Response<TSubscriptionStatus | { message: string }>,
 ) => {
-  // Extract User email
+  // Extract User details
   const { email, stripe_customer_id } = res.locals.jwt_decoded;
 
   // First, let's check to see if user has a stripe_customer_id (faster lookup since we don't have to query stripe Customer list)
   let customerId = null;
-
-  console.log("stripe_customer_id", stripe_customer_id);
 
   if (stripe_customer_id) {
     customerId = stripe_customer_id;

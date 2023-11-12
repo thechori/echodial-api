@@ -20,4 +20,6 @@ router.post(
 );
 router.post("/create-checkout-session", createStripeCheckoutSession);
 
+/* Stripe webhooks */
+
 export default router;

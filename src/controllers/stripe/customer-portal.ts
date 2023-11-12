@@ -9,10 +9,31 @@ export const createStripeCustomerPortalSession = async (
   req: Request,
   res: Response,
 ) => {
-  // Extract Stripe Customer ID
-  const { stripe_customer_id } = res.locals.jwt_decoded;
+  // Extract User details
+  const { email, stripe_customer_id } = res.locals.jwt_decoded;
 
-  if (stripe_customer_id === null) {
+  // First, let's check to see if user has a stripe_customer_id (faster lookup since we don't have to query stripe Customer list)
+  let customerId = null;
+
+  if (stripe_customer_id) {
+    customerId = stripe_customer_id;
+  } else {
+    // Get all Stripe Customers
+    const customers = await stripe.customers.list({
+      email: email,
+    });
+
+    if (!customers) throw Error("No Stripe customers found");
+
+    // Find single customer using email
+    const customer = customers.data.find((c) => c.email === email);
+
+    if (!customer) throw Error("No Stripe customer found with that email");
+
+    customerId = customer.id;
+  }
+
+  if (customerId === null) {
     throw Error("Stripe customer id not found");
   }
 
@@ -55,7 +76,7 @@ export const createStripeCustomerPortalSession = async (
   console.log("configuration", configuration);
 
   const session = await stripe.billingPortal.sessions.create({
-    customer: stripe_customer_id,
+    customer: customerId,
     return_url: `${envConfig.clientHost}/subscription/callback`,
     configuration: configuration.id,
   });
