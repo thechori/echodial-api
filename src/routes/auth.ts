@@ -91,7 +91,7 @@ router.get("/refresh-token", async (req, res) => {
     expiresIn: ACCESS_TOKEN_EXPIRES_IN,
   });
 
-  res.header("Authorization", accessToken).send(decoded);
+  res.header("Authorization", accessToken).send(accessToken);
 });
 
 // Request password reset
