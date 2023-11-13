@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 //
 import { isValidPhoneNumberForDb } from "../../utils/validators/phone";
@@ -9,7 +9,7 @@ import { TrialCredit, User } from "../../types";
 import { extractErrorMessage } from "../../utils/error";
 import { DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS } from "../../configs/app";
 
-export const createUser = async (req: Request, res: Response) => {
+export const createUser: RequestHandler = async (req, res) => {
   const { email, password, firstName, lastName, phone } = req.body;
 
   /* Validate data before inserting into the database */

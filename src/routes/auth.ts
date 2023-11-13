@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { differenceInMinutes } from "date-fns";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";
@@ -11,11 +12,11 @@ import envConfig from "../configs/env";
 import { PasswordResetToken, User } from "../types";
 import {
   ACCESS_TOKEN_EXPIRES_IN,
+  COOKIE_REFRESH_TOKEN,
   REFRESH_TOKEN_EXPIRES_IN,
   SALT_ROUNDS,
 } from "../configs/auth";
 import { PASSWORD_RESET_TOKEN_EXPIRATION_IN_MINUTES } from "../configs/auth";
-import { differenceInMinutes } from "date-fns";
 
 const router = Router();
 
@@ -55,30 +56,20 @@ router.post("/sign-in", async (req, res) => {
 
   res
     .status(200)
-    .cookie("refresh_token", refreshToken, {
+    .cookie(COOKIE_REFRESH_TOKEN, refreshToken, {
       httpOnly: true,
       sameSite: "strict",
     })
-    .send(accessToken);
-
-  // Record `user_event`
-  // await db<UserEvent>("user_event").insert({
-  //   user_id: user.id,
-  //   user_event_type_id: 3, // id 3 = "sign-in"
-  // });
+    .json(accessToken);
 });
 
 // Refresh access_token using refresh_token in cookie
 router.get("/refresh-token", async (req, res) => {
-  const refreshToken = req.cookies["refresh_token"];
+  const refreshToken = req.cookies[COOKIE_REFRESH_TOKEN];
 
   if (!refreshToken) throw Error("Refresh token not found");
 
-  console.log("refreshToken", refreshToken);
-
   const decoded = jwt.verify(refreshToken, envConfig.bcryptSecret);
-
-  console.log("decoded", decoded);
 
   // TODO: Improve by adding `user` object to encapsulate the data
   // Remove `iat` and `exp` from decoded token in order to set again
@@ -91,7 +82,7 @@ router.get("/refresh-token", async (req, res) => {
     expiresIn: ACCESS_TOKEN_EXPIRES_IN,
   });
 
-  res.header("Authorization", accessToken).send(accessToken);
+  res.header("Authorization", accessToken).json(accessToken);
 });
 
 // Request password reset
@@ -244,7 +235,7 @@ router.get("/reset-password-token/:token", async (req, res) => {
     );
   }
 
-  return res.status(200).send(user.email);
+  return res.status(200).json(user.email);
 });
 
 // Pass in token, email, and new password -> update user password

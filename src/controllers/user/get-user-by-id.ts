@@ -1,10 +1,10 @@
-import { Request, Response } from "express";
+import { RequestHandler } from "express";
 //
 import db from "../../utils/db";
 import { extractErrorMessage } from "../../utils/error";
 import { User } from "../../types";
 
-export const getUserByID = async (req: Request, res: Response) => {
+export const getUserByID: RequestHandler = async (req, res) => {
   const { id } = req.params;
 
   if (id === null) {
