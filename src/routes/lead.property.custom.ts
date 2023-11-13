@@ -2,7 +2,7 @@ import { Router } from "express";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
-import { LeadCustomProperty } from "../types";
+import { LeadCustomProperty, LeadStandardProperty } from "../types";
 import { createValueFromLabel } from "../utils/helpers/create-value-from-label";
 
 const router = Router({ mergeParams: true });
@@ -68,6 +68,11 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    
+    const existingRecords = await db<LeadStandardProperty>("lead_standard_property").select().where({name: createValueFromLabel(label)});
+    if (existingRecords.length > 0) {
+      throw Error("Property already exists!");
+    }
     const newLeadCustomProperty = await db<LeadCustomProperty>(
       "lead_custom_property",
     )
