@@ -21,13 +21,21 @@ import bucketRouter from "./routes/bucket";
 import stripeRouter from "./routes/stripe";
 import trialCreditRouter from "./routes/trial-credit";
 import { extractErrorMessage } from "./utils/error";
+import envConfig from "./configs/env";
 
 const app = express();
 
 app.use(cookieParser());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(cors());
+
+// CORS is configured to handle cross-origin cookies
+app.use(
+  cors({
+    origin: [envConfig.clientHost], // Your frontend's origin
+    credentials: true, // To accept cookies via cross-origin requests
+  }),
+);
 app.use(morgan("common"));
 
 app.get("/", (req: Request, res: Response) => {
