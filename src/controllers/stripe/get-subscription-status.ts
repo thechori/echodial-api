@@ -31,12 +31,18 @@ export const getSubscriptionStatus = async (
       email: email,
     });
 
-    if (!customers) throw Error("No Customers found");
+    if (!customers) {
+      res.status(404);
+      throw Error("No Customers found");
+    }
 
     // Find single customer using email
     const customer = customers.data.find((c) => c.email === email);
 
-    if (!customer) throw Error("No Customer found with that email");
+    if (!customer) {
+      res.status(404);
+      throw Error("No Customer found with that email");
+    }
 
     customerId = customer.id;
   }
@@ -46,18 +52,26 @@ export const getSubscriptionStatus = async (
     customer: customerId,
   });
 
-  if (!subscriptions)
+  if (!subscriptions) {
+    res.status(404);
     throw Error("No Subscription found with that customer id");
+  }
 
   const subscription = subscriptions.data[0];
 
-  if (!subscription) throw Error("No Subscription found");
+  if (!subscription) {
+    res.status(404);
+    throw Error("No Subscription found");
+  }
 
   const product = await stripe.products.retrieve(
     subscription.items.data[0].price.product.toString(),
   );
 
-  if (!product) throw Error("No Product found");
+  if (!product) {
+    res.status(404);
+    throw Error("No Product found");
+  }
 
   res.status(200).json({
     subscription,
