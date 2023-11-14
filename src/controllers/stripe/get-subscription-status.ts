@@ -6,9 +6,8 @@ import envConfig from "../../configs/env";
 const stripe = new Stripe(envConfig.stripeApiKey);
 
 type TSubscriptionStatus = {
-  description: string | null;
-  status: Stripe.Subscription.Status | null;
-  items: Stripe.ApiList<Stripe.SubscriptionItem> | null;
+  subscription: Stripe.Subscription;
+  product: Stripe.Product;
 };
 
 // Note: Stripe does not give us an easy way to fetch a Subscription via a Customer email since the email field
@@ -32,12 +31,12 @@ export const getSubscriptionStatus = async (
       email: email,
     });
 
-    if (!customers) throw Error("No Stripe customers found");
+    if (!customers) throw Error("No Customers found");
 
     // Find single customer using email
     const customer = customers.data.find((c) => c.email === email);
 
-    if (!customer) throw Error("No Stripe customer found with that email");
+    if (!customer) throw Error("No Customer found with that email");
 
     customerId = customer.id;
   }
@@ -48,15 +47,20 @@ export const getSubscriptionStatus = async (
   });
 
   if (!subscriptions)
-    throw Error("No Stripe subscription found with that customer id");
+    throw Error("No Subscription found with that customer id");
 
   const subscription = subscriptions.data[0];
 
-  if (!subscription) throw Error("No Stripe subscription found");
+  if (!subscription) throw Error("No Subscription found");
 
-  res.status(200).send({
-    status: subscription.status,
-    description: subscription.description,
-    items: subscription.items,
+  const product = await stripe.products.retrieve(
+    subscription.items.data[0].price.product.toString(),
+  );
+
+  if (!product) throw Error("No Product found");
+
+  res.status(200).json({
+    subscription,
+    product,
   });
 };
