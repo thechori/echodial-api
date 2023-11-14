@@ -37,8 +37,8 @@ export async function up(knex: Knex): Promise<void> {
       table.string("address1", 255); // 14715 Barryknoll Ln
       table.string("address2", 255); // Apt 129
       table.string("city", 255); // Houston
-      table.string("state", 2); // TX
-      table.string("zip", 9); // 77079-3151
+      table.string("state", 255); // TX
+      table.string("zip", 255); // 77079-3151
       table.string("source", 255);
       //
       table.timestamps(true, true);
