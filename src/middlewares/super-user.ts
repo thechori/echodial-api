@@ -3,6 +3,7 @@ import { RequestHandler } from "express";
 import jwt, { JwtPayload } from "jsonwebtoken";
 //
 import { extractErrorMessage } from "../utils/error";
+import envConfig from "../configs/env";
 
 dotenv.config();
 
@@ -23,7 +24,7 @@ export const superUserAuthMiddleware: RequestHandler = async (
     const token = authorization.split(" ")[1];
     const jwt_decoded = (await jwt.verify(
       token,
-      process.env.BCRYPT_SECRET as string,
+      envConfig.bcryptSecret,
     )) as JwtPayload;
 
     // TODO: create DB table of super users and check to see if this user is in that group

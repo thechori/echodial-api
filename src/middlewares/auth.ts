@@ -7,6 +7,7 @@ import {
   EXPIRED_SESSION_MESSAGE,
   UNAUTHORIZED_REQUEST_MESSAGE,
 } from "../configs/error-messages";
+import envConfig from "../configs/env";
 
 dotenv.config();
 
@@ -21,10 +22,7 @@ export const authMiddleware: RequestHandler = async (req, res, next) => {
   try {
     // Extract and verify JWT
     const accessToken = authorization.split(" ")[1];
-    const jwt_decoded = await jwt.verify(
-      accessToken,
-      process.env.BCRYPT_SECRET as string,
-    );
+    const jwt_decoded = await jwt.verify(accessToken, envConfig.bcryptSecret);
 
     // Attach JWT to req for each access
     res.locals.jwt_decoded = jwt_decoded;
@@ -39,6 +37,6 @@ export const authMiddleware: RequestHandler = async (req, res, next) => {
       return res.status(401).json(EXPIRED_SESSION_MESSAGE);
     }
 
-    return res.status(500).json(errorMessage);
+    return res.status(401).json(errorMessage);
   }
 };
