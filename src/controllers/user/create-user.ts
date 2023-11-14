@@ -1,19 +1,15 @@
-import { Request, Response } from "express";
-import Stripe from "stripe";
+import { RequestHandler } from "express";
 import bcrypt from "bcrypt";
 //
 import { isValidPhoneNumberForDb } from "../../utils/validators/phone";
 import { isValidEmailAddress } from "../../utils/validators/email";
-import { saltRounds } from "../../configs/auth";
-import envConfig from "../../configs/env";
+import { SALT_ROUNDS } from "../../configs/auth";
 import db from "../../utils/db";
 import { TrialCredit, User } from "../../types";
 import { extractErrorMessage } from "../../utils/error";
 import { DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS } from "../../configs/app";
 
-const stripe = new Stripe(envConfig.stripeApiKey);
-
-export const createUser = async (req: Request, res: Response) => {
+export const createUser: RequestHandler = async (req, res) => {
   const { email, password, firstName, lastName, phone } = req.body;
 
   /* Validate data before inserting into the database */
@@ -35,10 +31,10 @@ export const createUser = async (req: Request, res: Response) => {
 
   try {
     // Hash password before inserting to DB
-    const passwordHash = await bcrypt.hash(password, saltRounds);
+    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
     // Run DB query
-    const newUser = await db<User>("user")
+    const [newUser] = await db<User>("user")
       .insert({
         email: emailClean,
         password_hash: passwordHash,
@@ -48,36 +44,10 @@ export const createUser = async (req: Request, res: Response) => {
       })
       .returning("*");
 
-    // Create Stripe Customer and Subscription
-    const stripeCustomer = await stripe.customers.create({
-      email: emailClean,
-      name: `${firstName} ${lastName}`,
-      phone: phone,
-    });
-
-    const stripeSubscription = await stripe.subscriptions.create({
-      customer: stripeCustomer.id,
-      trial_period_days: 7,
-      items: [
-        {
-          price: "price_1NvS4dKGxd0U3zJwIewutyC0", // (test) Standard plan - $69.99
-          // price: "price_1O8pAnKGxd0U3zJwosJYrkY8", // (live) Dollar Donation Club
-        },
-      ],
-    });
-
-    const updatedUser = await db<User>("user")
-      .update({
-        stripe_customer_id: stripeCustomer.id,
-        stripe_subscription_id: stripeSubscription.id,
-      })
-      .where("id", newUser[0].id)
-      .returning("*");
-
     // Create new trial credit record
     const [newTrialCredit] = await db<TrialCredit>("trial_credit")
       .insert({
-        user_id: updatedUser[0].id,
+        user_id: newUser.id,
         initial_amount: DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS,
         remaining_amount: DEFAULT_TRIAL_CREDITS_FOR_NEW_USERS,
       })
@@ -89,7 +59,7 @@ export const createUser = async (req: Request, res: Response) => {
 
     return res
       .status(201)
-      .json({ message: "Successfully created new user", data: updatedUser[0] });
+      .json({ message: "Successfully created new user", data: newUser });
   } catch (e) {
     // Safely check for `code` in error object
     if (e !== null && typeof e === "object" && "code" in e && "message" in e) {

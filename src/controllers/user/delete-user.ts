@@ -1,9 +1,9 @@
-import { Request, Response } from "express";
+import { RequestHandler } from "express";
 //
 import db from "../../utils/db";
 import { User } from "../../types";
 
-export const deleteUser = async (req: Request, res: Response) => {
+export const deleteUser: RequestHandler = async (req, res) => {
   const { id } = res.locals.jwt_decoded;
 
   // TODO: Delete all associated records (for now, we can leave these hanging around)
