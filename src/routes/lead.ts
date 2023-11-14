@@ -5,7 +5,7 @@ import fs from "fs";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
-import { Lead } from "../types";
+import { Lead, LeadStandardProperty } from "../types";
 import {
   isValidPhoneNumberForDb,
   transformPhoneNumberForDb,
@@ -207,6 +207,116 @@ router.post("/", async (req, res) => {
   }
 });
 
+// router.post("/csv", upload.single("file"), function (req, res) {
+//   const { id } = res.locals.jwt_decoded;
+//   const { source } = req.body;
+
+//   // Validate file existence
+//   if (!req.file) {
+//     return res.status(400).send("Missing `file` field");
+//   }
+
+//   const fileRows: string[][] = []; // [ ["1", "ryan", "teodoro", "thechori@gmail.com", "+18326460869"], [...], [...] ]
+
+//   // Open uploaded file
+//   csv
+//     .parseFile(req.file.path)
+//     .on("data", function (data: any) {
+//       fileRows.push(data); // push each row
+//     })
+//     .on("end", async function () {
+//       // @ts-ignore
+//       fs.unlinkSync(req.file.path); // Remove temp file
+
+//       // Check for length
+//       if (fileRows.length < 2) {
+//         res.status(400).send("CSV file has no data");
+//       }
+
+//       // Validate structure
+//       const columnHeaders: {
+//         email: number;
+//         phone: number;
+//         first_name: number;
+//         last_name: number;
+//       } = {
+//         email: -1,
+//         phone: -1,
+//         first_name: -1,
+//         last_name: -1,
+//       };
+
+//       // Search first index of fileRows to create column mapping
+//       const h = fileRows.shift(); // better way
+//       // const h = fileRows[0]; // old way
+
+//       if (!h) {
+//         return res
+//           .status(400)
+//           .send(
+//             "CSV file corrupted. Please check the structure (e.g., column names) upload another one.",
+//           );
+//       }
+
+//       // Ensure that all column maps were found, if not, show error
+//       columnHeaders.email = h.indexOf("email");
+//       columnHeaders.phone = h.indexOf("phone");
+//       columnHeaders.first_name = h.indexOf("first_name");
+//       columnHeaders.last_name = h.indexOf("last_name");
+
+//       const columnErrors: string[] = [];
+
+//       for (const [key, value] of Object.entries(columnHeaders)) {
+//         // Column not found
+//         if (value === -1) {
+//           const error = `Column "${key}" is missing or misspelled`;
+//           columnErrors.push(error);
+//         }
+//       }
+
+//       if (columnErrors.length) {
+//         return res.status(400).send(columnErrors.join(", "));
+//       }
+
+//       try {
+//         // Transform CSV output structure to match DB schema
+//         const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
+//           // Transform phone number
+//           const rawPhoneValue = row[columnHeaders.phone as number];
+//           const phoneNumberForDb = transformPhoneNumberForDb(rawPhoneValue);
+
+//           // Validate phone number
+//           if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
+//             throw new Error(
+//               `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`,
+//             );
+//           }
+
+//           return {
+//             user_id: id,
+//             email: row[columnHeaders.email as number],
+//             phone: phoneNumberForDb,
+//             first_name: row[columnHeaders.first_name as number],
+//             last_name: row[columnHeaders.last_name as number],
+//             source,
+//           };
+//         });
+
+//         // Insert into DB
+//         await db<Lead>("lead").insert(leadsToInsert);
+//         res.status(200).json({
+//           message: `Successfully uploaded ${fileRows.length} leads`,
+//           data: fileRows,
+//         });
+//       } catch (e) {
+//         res.status(500).send(extractErrorMessage(e));
+//       }
+//     })
+//     .on("error", (e: any) => {
+//       res.status(500).send(extractErrorMessage(e));
+//     });
+// });
+
 router.post("/csv", upload.single("file"), function (req, res) {
   const { id } = res.locals.jwt_decoded;
   const { source } = req.body;
@@ -215,9 +325,11 @@ router.post("/csv", upload.single("file"), function (req, res) {
   if (!req.file) {
     return res.status(400).send("Missing `file` field");
   }
+  const mappingArray = JSON.parse(req.body.headerToProperties);
 
   const fileRows: string[][] = []; // [ ["1", "ryan", "teodoro", "thechori@gmail.com", "+18326460869"], [...], [...] ]
 
+  
   // Open uploaded file
   csv
     .parseFile(req.file.path)
@@ -233,88 +345,36 @@ router.post("/csv", upload.single("file"), function (req, res) {
         res.status(400).send("CSV file has no data");
       }
 
-      // Validate structure
-      const columnHeaders: {
-        email: number;
-        phone: number;
-        first_name: number;
-        last_name: number;
-      } = {
-        email: -1,
-        phone: -1,
-        first_name: -1,
-        last_name: -1,
-      };
-
-      // Search first index of fileRows to create column mapping
-      const h = fileRows.shift(); // better way
-      // const h = fileRows[0]; // old way
-
-      if (!h) {
-        return res
-          .status(400)
-          .send(
-            "CSV file corrupted. Please check the structure (e.g., column names) upload another one.",
-          );
-      }
-
-      // Ensure that all column maps were found, if not, show error
-      columnHeaders.email = h.indexOf("email");
-      columnHeaders.phone = h.indexOf("phone");
-      columnHeaders.first_name = h.indexOf("first_name");
-      columnHeaders.last_name = h.indexOf("last_name");
-
-      const columnErrors: string[] = [];
-
-      for (const [key, value] of Object.entries(columnHeaders)) {
-        // Column not found
-        if (value === -1) {
-          const error = `Column "${key}" is missing or misspelled`;
-          columnErrors.push(error);
-        }
-      }
-
-      if (columnErrors.length) {
-        return res.status(400).send(columnErrors.join(", "));
-      }
-
       try {
-        // Transform CSV output structure to match DB schema
-        const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
-          // Transform phone number
-          const rawPhoneValue = row[columnHeaders.phone as number];
-          const phoneNumberForDb = transformPhoneNumberForDb(rawPhoneValue);
-
-          // Validate phone number
-          if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
-            throw new Error(
-              `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`,
-            );
+        const leadStandardProperties: LeadStandardProperty[] = await db(
+          "lead_standard_property",
+        ).select("name")
+        const standardProperties = leadStandardProperties.map(item => item.name);
+        const fileBody = fileRows.slice(1);
+        for (let row = 0; row < fileBody.length; row++) {
+          const newEntry : any = {};
+          for (let col = 0; col < fileBody[row].length; col++) {
+            if (mappingArray[col].mapped) {
+              const property : string = mappingArray[col].property;
+              //check if property is in Standard Properties
+              //else insert into Custom Properties 
+              if (standardProperties.includes(property)) {
+                newEntry[property] = fileBody[row][col];
+              } else {
+              
+              }
+            }
           }
-
-          return {
-            user_id: id,
-            email: row[columnHeaders.email as number],
-            phone: phoneNumberForDb,
-            first_name: row[columnHeaders.first_name as number],
-            last_name: row[columnHeaders.last_name as number],
-            source,
-          };
-        });
-
-        // Insert into DB
-        await db<Lead>("lead").insert(leadsToInsert);
-        res.status(200).json({
-          message: `Successfully uploaded ${fileRows.length} leads`,
-          data: fileRows,
-        });
+        }
       } catch (e) {
-        res.status(500).send(extractErrorMessage(e));
-      }
+        return res.status(500).send({ message: extractErrorMessage(e) });
+      };
+    
     })
     .on("error", (e: any) => {
       res.status(500).send(extractErrorMessage(e));
     });
+  return res.status(200).send("complete");
 });
 
 router.get("/pretty", async (req, res) => {
