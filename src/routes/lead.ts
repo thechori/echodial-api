@@ -316,6 +316,43 @@ router.post("/", async (req, res) => {
 //       res.status(500).send(extractErrorMessage(e));
 //     });
 // });
+router.post("/csv/validate", async (req, res) => {
+  const dataArray = JSON.parse(req.body.columnData)
+  const propertyToCheck = req.body.propertyToCheck;
+  
+  if (dataArray.length < 1) {
+    return res.status(400).send("No data to validate");
+  }
+  if (!propertyToCheck) {
+    return res.status(400).send("No property to validate data with");
+  }
+  const leadStandardProperties: LeadStandardProperty[] = await db(
+    "lead_standard_property",
+  ).select("name")
+
+  if (!(propertyToCheck in leadStandardProperties)) {
+    console.log("No need to validate!")
+  }
+  const leadsColumnInfo: any = await db(
+    "lead",
+  ).columnInfo(propertyToCheck)
+  
+  //check for null values
+  if (!leadsColumnInfo.nullable && dataArray.contains(null)) {
+    return res.status(400).send("Values in this column can't be empty");
+  }
+
+  //check if all values are under max length
+  const allValuesUnderMaxLength = dataArray.every((value: any) => value.length <= leadsColumnInfo.maxLength);
+
+  if (!allValuesUnderMaxLength) {
+    return res.status(400).send("Values are too long");
+  }
+
+  return res.status(200).json({
+    message: `Successful`,
+  });
+});
 
 router.post("/csv", upload.single("file"), function (req, res) {
   const { id } = res.locals.jwt_decoded;
@@ -361,20 +398,29 @@ router.post("/csv", upload.single("file"), function (req, res) {
               if (standardProperties.includes(property)) {
                 newEntry[property] = fileBody[row][col];
               } else {
-              
+                const valueToAdd = {[property]: fileBody[row][col]};
+                if ("custom_properties" in newEntry) {
+                  const existingCustomProperties = newEntry["custom_properties"];
+                  newEntry["custom_properties"] = { ...existingCustomProperties, ...valueToAdd };
+                } else {
+                  newEntry["custom_properties"] = valueToAdd;
+                }
               }
             }
           }
+          newEntry["user_id"] = id;
+          await db<Lead>("lead").insert(newEntry);
         }
+        res.status(200).json({
+          message: `Successfully uploaded leads`,
+        });
       } catch (e) {
         return res.status(500).send({ message: extractErrorMessage(e) });
       };
-    
     })
     .on("error", (e: any) => {
       res.status(500).send(extractErrorMessage(e));
     });
-  return res.status(200).send("complete");
 });
 
 router.get("/pretty", async (req, res) => {
@@ -391,24 +437,24 @@ router.get("/pretty", async (req, res) => {
   res.status(200).send(leads);
 });
 
-router.post("/csv/validate", upload.single("file"), async (req, res) => {
-  // Extract user ID
-  // const { id } = res.locals.jwt_decoded;
-  const { mapping_data } = req.body;
+// router.post("/csv/validate", upload.single("file"), async (req, res) => {
+//   // Extract user ID
+//   // const { id } = res.locals.jwt_decoded;
+//   const { mapping_data } = req.body;
 
-  // Validate mapping_data
-  if (!mapping_data || !mapping_data.length) {
-    return res.status(400).send("Missing `mapping_data` array");
-  }
+//   // Validate mapping_data
+//   if (!mapping_data || !mapping_data.length) {
+//     return res.status(400).send("Missing `mapping_data` array");
+//   }
 
-  // Validate file existence
-  if (!req.file) {
-    return res.status(400).send("Missing `file` field");
-  }
+//   // Validate file existence
+//   if (!req.file) {
+//     return res.status(400).send("Missing `file` field");
+//   }
 
-  // Obtain all of the column names
-  // TODO - see example from existing POST /csv enpodint
-});
+//   // Obtain all of the column names
+//   // TODO - see example from existing POST /csv enpodint
+// });
 
 // Designating this as /csv/v2 to allow the current endpoint to continue functioning until this is 100% ready and we can decommission the original
 // router.post("/csv/v2", upload.single("file"), async (req, res) => {
