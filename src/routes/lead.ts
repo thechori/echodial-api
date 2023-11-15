@@ -286,57 +286,59 @@ router.post("/csv", upload.single("file"), function (req, res) {
       fileRows.push(data); // push each row
     })
     .on("end", async function () {
-      // @ts-ignore
-      fs.unlinkSync(req.file.path); // Remove temp file
+      try {
+          // @ts-ignore
+        fs.unlinkSync(req.file.path); // Remove temp file
 
-      // Check for length
-      if (fileRows.length < 2) {
-        res.status(400).send("CSV file has no data");
-      }
-      const leadStandardProperties: LeadStandardProperty[] = await db(
-        "lead_standard_property",
-      ).select("name")
-      const standardProperties = leadStandardProperties.map(item => item.name);
-      const fileBody = fileRows.slice(1);
-      for (let row = 0; row < fileBody.length; row++) {
-        const newEntry : any = {};
-        for (let col = 0; col < fileBody[row].length; col++) {
-          if (mappingArray[col].mapped) {
-            const property : string = mappingArray[col].property;
-            //check if property is in Standard Properties
-            //else insert into Custom Properties 
-            if (standardProperties.includes(property)) {
-              if (property === "phone") {
-                newEntry[property] = transformPhoneNumberForDb(fileBody[row][col].toString());
+        // Check for length
+        if (fileRows.length < 2) {
+          res.status(400).send("CSV file has no data");
+        }
+        const leadStandardProperties: LeadStandardProperty[] = await db(
+          "lead_standard_property",
+        ).select("name")
+        const standardProperties = leadStandardProperties.map(item => item.name);
+        const fileBody = fileRows.slice(1);
+        for (let row = 0; row < fileBody.length; row++) {
+          const newEntry : any = {};
+          for (let col = 0; col < fileBody[row].length; col++) {
+            if (mappingArray[col].mapped) {
+              const property : string = mappingArray[col].property;
+              //check if property is in Standard Properties
+              //else insert into Custom Properties 
+              if (standardProperties.includes(property)) {
+                if (property === "phone") {
+                  newEntry[property] = transformPhoneNumberForDb(fileBody[row][col].toString());
+                } else {
+                  newEntry[property] = fileBody[row][col];
+                }
               } else {
-                newEntry[property] = fileBody[row][col];
-              }
-            } else {
-              const valueToAdd = {[property]: fileBody[row][col]};
-              if ("custom_properties" in newEntry) {
-                const existingCustomProperties = newEntry["custom_properties"];
-                newEntry["custom_properties"] = { ...existingCustomProperties, ...valueToAdd };
-              } else {
-                newEntry["custom_properties"] = valueToAdd;
+                const valueToAdd = {[property]: fileBody[row][col]};
+                if ("custom_properties" in newEntry) {
+                  const existingCustomProperties = newEntry["custom_properties"];
+                  newEntry["custom_properties"] = { ...existingCustomProperties, ...valueToAdd };
+                } else {
+                  newEntry["custom_properties"] = valueToAdd;
+                }
               }
             }
           }
+          newEntry["user_id"] = id;
+          await db<Lead>("lead").insert(newEntry);
         }
-        newEntry["user_id"] = id;
-        await db<Lead>("lead").insert(newEntry);
+        res.status(200).json({
+          message: `Successfully uploaded leads`,
+        });
+      } catch (e) {
+        return res.status(500).send({ message: extractErrorMessage(e) });
       }
-      res.status(200).json({
-        message: `Successfully uploaded leads`,
-      });
     })
     .on("error", (e: any) => {
-      throw new Error(e);
+      return res.status(500).send({ message: extractErrorMessage(e) });
     });
   } catch (e) {
-    console.log(e);
     return res.status(500).send({ message: extractErrorMessage(e) });
   };
-  // Open uploaded file
   
 });
 
