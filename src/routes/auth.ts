@@ -26,6 +26,7 @@ router.post("/sign-in", async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
+    res.status(400);
     throw Error("Please provide an email and password");
   }
 
@@ -36,6 +37,7 @@ router.post("/sign-in", async (req, res) => {
   const user = await db<User>("user").where("email", emailClean).first();
 
   if (!user) {
+    res.status(404);
     throw Error("Email and password combination not found");
   }
 
@@ -43,6 +45,7 @@ router.post("/sign-in", async (req, res) => {
   const isMatch = await bcrypt.compare(password, user.password_hash);
 
   if (!isMatch) {
+    res.status(404);
     throw Error("Email and password combination not found");
   }
 
@@ -93,6 +96,7 @@ router.post("/reset-password-request", async (req, res) => {
   const { email } = req.body;
 
   if (!email) {
+    res.status(400);
     throw Error("Email is missing");
   }
 

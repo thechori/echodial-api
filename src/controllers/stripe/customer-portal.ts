@@ -23,7 +23,10 @@ export const createStripeCustomerPortalSession = async (
       email: email,
     });
 
-    if (!customers) throw Error("No Stripe customers found");
+    if (!customers) {
+      res.status(404);
+      throw Error("No Stripe customers found");
+    }
 
     // Find single customer using email
     const customer = customers.data.find((c) => c.email === email);
@@ -34,6 +37,7 @@ export const createStripeCustomerPortalSession = async (
   }
 
   if (customerId === null) {
+    res.status(404);
     throw Error("Stripe customer id not found");
   }
 

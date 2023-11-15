@@ -9,5 +9,5 @@ const stripe = new Stripe(envConfig.stripeApiKey);
 export const getStripeSubscriptions = async (req: Request, res: Response) => {
   const subscriptions = (await stripe.subscriptions.list()).data;
 
-  res.status(200).send(subscriptions);
+  res.status(200).json(subscriptions);
 };
