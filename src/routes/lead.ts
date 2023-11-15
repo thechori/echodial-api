@@ -207,151 +207,64 @@ router.post("/", async (req, res) => {
   }
 });
 
-// router.post("/csv", upload.single("file"), function (req, res) {
-//   const { id } = res.locals.jwt_decoded;
-//   const { source } = req.body;
-
-//   // Validate file existence
-//   if (!req.file) {
-//     return res.status(400).send("Missing `file` field");
-//   }
-
-//   const fileRows: string[][] = []; // [ ["1", "ryan", "teodoro", "thechori@gmail.com", "+18326460869"], [...], [...] ]
-
-//   // Open uploaded file
-//   csv
-//     .parseFile(req.file.path)
-//     .on("data", function (data: any) {
-//       fileRows.push(data); // push each row
-//     })
-//     .on("end", async function () {
-//       // @ts-ignore
-//       fs.unlinkSync(req.file.path); // Remove temp file
-
-//       // Check for length
-//       if (fileRows.length < 2) {
-//         res.status(400).send("CSV file has no data");
-//       }
-
-//       // Validate structure
-//       const columnHeaders: {
-//         email: number;
-//         phone: number;
-//         first_name: number;
-//         last_name: number;
-//       } = {
-//         email: -1,
-//         phone: -1,
-//         first_name: -1,
-//         last_name: -1,
-//       };
-
-//       // Search first index of fileRows to create column mapping
-//       const h = fileRows.shift(); // better way
-//       // const h = fileRows[0]; // old way
-
-//       if (!h) {
-//         return res
-//           .status(400)
-//           .send(
-//             "CSV file corrupted. Please check the structure (e.g., column names) upload another one.",
-//           );
-//       }
-
-//       // Ensure that all column maps were found, if not, show error
-//       columnHeaders.email = h.indexOf("email");
-//       columnHeaders.phone = h.indexOf("phone");
-//       columnHeaders.first_name = h.indexOf("first_name");
-//       columnHeaders.last_name = h.indexOf("last_name");
-
-//       const columnErrors: string[] = [];
-
-//       for (const [key, value] of Object.entries(columnHeaders)) {
-//         // Column not found
-//         if (value === -1) {
-//           const error = `Column "${key}" is missing or misspelled`;
-//           columnErrors.push(error);
-//         }
-//       }
-
-//       if (columnErrors.length) {
-//         return res.status(400).send(columnErrors.join(", "));
-//       }
-
-//       try {
-//         // Transform CSV output structure to match DB schema
-//         const leadsToInsert: Partial<Lead>[] = fileRows.map((row) => {
-//           // Transform phone number
-//           const rawPhoneValue = row[columnHeaders.phone as number];
-//           const phoneNumberForDb = transformPhoneNumberForDb(rawPhoneValue);
-
-//           // Validate phone number
-//           if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
-//             throw new Error(
-//               `Phone number "${rawPhoneValue}" did not pass validation requirements. Please check this value and try to upload the CSV file again.`,
-//             );
-//           }
-
-//           return {
-//             user_id: id,
-//             email: row[columnHeaders.email as number],
-//             phone: phoneNumberForDb,
-//             first_name: row[columnHeaders.first_name as number],
-//             last_name: row[columnHeaders.last_name as number],
-//             source,
-//           };
-//         });
-
-//         // Insert into DB
-//         await db<Lead>("lead").insert(leadsToInsert);
-//         res.status(200).json({
-//           message: `Successfully uploaded ${fileRows.length} leads`,
-//           data: fileRows,
-//         });
-//       } catch (e) {
-//         res.status(500).send(extractErrorMessage(e));
-//       }
-//     })
-//     .on("error", (e: any) => {
-//       res.status(500).send(extractErrorMessage(e));
-//     });
-// });
 router.post("/csv/validate", async (req, res) => {
+  const { id } = res.locals.jwt_decoded;
   const dataArray = JSON.parse(req.body.columnData)
   const propertyToCheck = req.body.propertyToCheck;
-  
+  const returnObject = {message: "", error: true};
   if (dataArray.length < 1) {
-    return res.status(400).send("No data to validate");
+    returnObject.message = "No data to validate"
+    return res.json(returnObject);
   }
-  if (!propertyToCheck) {
-    return res.status(400).send("No property to validate data with");
+  if (propertyToCheck === "phone") {
+    const validPhoneNumbers = dataArray.every((value: any) => {
+      // Remove non-digit characters
+      const cleanedValue = value.toString().replace(/\D/g, '');
+      
+      // Check if the cleaned value matches the desired phone number patterns
+      return isValidPhoneNumberForDb(value.toString()) || /^\d{10}$/.test(cleanedValue)
+    });
+    if (!validPhoneNumbers) {
+      returnObject.message = "Invalid phone number format";
+      return res.json(returnObject);
+    } else {
+      returnObject.error = false;
+      return res.json(returnObject);
+    }
   }
   const leadStandardProperties: LeadStandardProperty[] = await db(
     "lead_standard_property",
   ).select("name")
-
-  if (!(propertyToCheck in leadStandardProperties)) {
-    console.log("No need to validate!")
+  
+  const leadStandardPropertiesValues = leadStandardProperties.map(obj => obj.name);
+  if (!(leadStandardPropertiesValues.includes(propertyToCheck))) {
+    returnObject.message = "No need to validate!";
+    returnObject.error = false;
+    return res.json(returnObject);
   }
   const leadsColumnInfo: any = await db(
     "lead",
   ).columnInfo(propertyToCheck)
   
   //check for null values
-  if (!leadsColumnInfo.nullable && dataArray.contains(null)) {
-    return res.status(400).send("Values in this column can't be empty");
+  if (!leadsColumnInfo.nullable && dataArray.includes(null)) {
+    returnObject.message = "Values in this column can't be empty"
+    return res.json(returnObject);
   }
-
   //check if all values are under max length
-  const allValuesUnderMaxLength = dataArray.every((value: any) => value.length <= leadsColumnInfo.maxLength);
+  if (leadsColumnInfo.maxLength) {
+    const dataArrayToStrings = dataArray.map((data : any) => (data !== null ? data.toString() : ""));
 
-  if (!allValuesUnderMaxLength) {
-    return res.status(400).send("Values are too long");
+    const allValuesUnderMaxLength = dataArrayToStrings.every((value: any) => value.length <= leadsColumnInfo.maxLength);
+
+    if (!allValuesUnderMaxLength) {
+      returnObject.message = "Values are too long"
+      return res.json(returnObject);
+    }
   }
-
-  return res.status(200).json({
-    message: `Successful`,
-  });
+  
+  returnObject.error = false;
+  return res.json(returnObject);
 });
 
 router.post("/csv", upload.single("file"), function (req, res) {
@@ -366,9 +279,8 @@ router.post("/csv", upload.single("file"), function (req, res) {
 
   const fileRows: string[][] = []; // [ ["1", "ryan", "teodoro", "thechori@gmail.com", "+18326460869"], [...], [...] ]
 
-  
-  // Open uploaded file
-  csv
+  try {
+    csv
     .parseFile(req.file.path)
     .on("data", function (data: any) {
       fileRows.push(data); // push each row
@@ -381,46 +293,51 @@ router.post("/csv", upload.single("file"), function (req, res) {
       if (fileRows.length < 2) {
         res.status(400).send("CSV file has no data");
       }
-
-      try {
-        const leadStandardProperties: LeadStandardProperty[] = await db(
-          "lead_standard_property",
-        ).select("name")
-        const standardProperties = leadStandardProperties.map(item => item.name);
-        const fileBody = fileRows.slice(1);
-        for (let row = 0; row < fileBody.length; row++) {
-          const newEntry : any = {};
-          for (let col = 0; col < fileBody[row].length; col++) {
-            if (mappingArray[col].mapped) {
-              const property : string = mappingArray[col].property;
-              //check if property is in Standard Properties
-              //else insert into Custom Properties 
-              if (standardProperties.includes(property)) {
-                newEntry[property] = fileBody[row][col];
+      const leadStandardProperties: LeadStandardProperty[] = await db(
+        "lead_standard_property",
+      ).select("name")
+      const standardProperties = leadStandardProperties.map(item => item.name);
+      const fileBody = fileRows.slice(1);
+      for (let row = 0; row < fileBody.length; row++) {
+        const newEntry : any = {};
+        for (let col = 0; col < fileBody[row].length; col++) {
+          if (mappingArray[col].mapped) {
+            const property : string = mappingArray[col].property;
+            //check if property is in Standard Properties
+            //else insert into Custom Properties 
+            if (standardProperties.includes(property)) {
+              if (property === "phone") {
+                newEntry[property] = transformPhoneNumberForDb(fileBody[row][col].toString());
               } else {
-                const valueToAdd = {[property]: fileBody[row][col]};
-                if ("custom_properties" in newEntry) {
-                  const existingCustomProperties = newEntry["custom_properties"];
-                  newEntry["custom_properties"] = { ...existingCustomProperties, ...valueToAdd };
-                } else {
-                  newEntry["custom_properties"] = valueToAdd;
-                }
+                newEntry[property] = fileBody[row][col];
+              }
+            } else {
+              const valueToAdd = {[property]: fileBody[row][col]};
+              if ("custom_properties" in newEntry) {
+                const existingCustomProperties = newEntry["custom_properties"];
+                newEntry["custom_properties"] = { ...existingCustomProperties, ...valueToAdd };
+              } else {
+                newEntry["custom_properties"] = valueToAdd;
               }
             }
           }
-          newEntry["user_id"] = id;
-          await db<Lead>("lead").insert(newEntry);
         }
-        res.status(200).json({
-          message: `Successfully uploaded leads`,
-        });
-      } catch (e) {
-        return res.status(500).send({ message: extractErrorMessage(e) });
-      };
+        newEntry["user_id"] = id;
+        await db<Lead>("lead").insert(newEntry);
+      }
+      res.status(200).json({
+        message: `Successfully uploaded leads`,
+      });
     })
     .on("error", (e: any) => {
-      res.status(500).send(extractErrorMessage(e));
+      throw new Error(e);
     });
+  } catch (e) {
+    console.log(e);
+    return res.status(500).send({ message: extractErrorMessage(e) });
+  };
+  // Open uploaded file
+  
 });
 
 router.get("/pretty", async (req, res) => {
