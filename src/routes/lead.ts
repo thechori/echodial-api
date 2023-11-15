@@ -269,7 +269,7 @@ router.post("/csv/validate", async (req, res) => {
 
 router.post("/csv", upload.single("file"), function (req, res) {
   const { id } = res.locals.jwt_decoded;
-  const { source } = req.body;
+  const source  = req.body.source;
 
   // Validate file existence
   if (!req.file) {
@@ -278,7 +278,6 @@ router.post("/csv", upload.single("file"), function (req, res) {
   const mappingArray = JSON.parse(req.body.headerToProperties);
 
   const fileRows: string[][] = []; // [ ["1", "ryan", "teodoro", "thechori@gmail.com", "+18326460869"], [...], [...] ]
-
   try {
     csv
     .parseFile(req.file.path)
@@ -286,6 +285,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
       fileRows.push(data); // push each row
     })
     .on("end", async function () {
+      console.log(source);
       try {
           // @ts-ignore
         fs.unlinkSync(req.file.path); // Remove temp file
@@ -324,6 +324,7 @@ router.post("/csv", upload.single("file"), function (req, res) {
             }
           }
           newEntry["user_id"] = id;
+          newEntry["source"] = source;
           await db<Lead>("lead").insert(newEntry);
         }
         res.status(200).json({
