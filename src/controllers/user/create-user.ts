@@ -54,6 +54,7 @@ export const createUser: RequestHandler = async (req, res) => {
       .returning("*");
 
     if (!newTrialCredit) {
+      res.status(400);
       throw Error("Error creating new trial credit record");
     }
 
@@ -63,8 +64,6 @@ export const createUser: RequestHandler = async (req, res) => {
   } catch (e) {
     // Safely check for `code` in error object
     if (e !== null && typeof e === "object" && "code" in e && "message" in e) {
-      console.log("e.code: ", e.code);
-
       let errorMessage = `Error ${e.code}: ${e.message}`;
 
       // Email or phone already exists

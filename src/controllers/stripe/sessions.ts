@@ -18,6 +18,7 @@ export const createStripeCheckoutSession = async (
   const { stripe_customer_id } = res.locals.jwt_decoded;
 
   if (stripe_customer_id === null) {
+    res.status(400);
     throw Error("Stripe customer id not found");
   }
 
@@ -29,5 +30,5 @@ export const createStripeCheckoutSession = async (
     currency: "usd",
   });
 
-  res.status(200).send(checkoutSession);
+  res.status(200).json(checkoutSession);
 };

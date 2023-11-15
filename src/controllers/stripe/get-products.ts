@@ -9,5 +9,5 @@ const stripe = new Stripe(envConfig.stripeApiKey);
 export const getStripeProducts = async (req: Request, res: Response) => {
   const products = (await stripe.products.list()).data;
 
-  res.status(200).send(products);
+  res.status(200).json(products);
 };

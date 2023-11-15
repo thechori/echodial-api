@@ -17,10 +17,12 @@ export const deleteUser: RequestHandler = async (req, res) => {
   // Delete User record based on id
   await db<User>("user").where("id", id).delete();
 
-  if (!deleteUser)
+  if (!deleteUser) {
+    res.status(400);
     throw Error(
       "There was a problem deleting the user account. Please try again or contact our support team.",
     );
+  }
 
   res.status(200).send("👋");
 };

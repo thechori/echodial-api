@@ -21,6 +21,7 @@ export const getCallUsage = async (req: Request, res: Response) => {
   const callerId = await db<CallerId>("caller_id").where("user_id", id).first();
 
   if (!callerId) {
+    res.status(404);
     throw Error("No caller ID found");
   }
 
