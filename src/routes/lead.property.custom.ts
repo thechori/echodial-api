@@ -2,11 +2,10 @@ import { Router } from "express";
 //
 import db from "../utils/db";
 import { extractErrorMessage } from "../utils/error";
-import { LeadCustomProperty } from "../types";
+import { LeadCustomProperty, LeadStandardProperty } from "../types";
 import { createValueFromLabel } from "../utils/helpers/create-value-from-label";
 
 const router = Router({ mergeParams: true });
-
 // Return LeadCustomProperty items
 router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
@@ -42,7 +41,7 @@ router.get("/", async (req, res) => {
       );
     return res.status(200).send(leadCustomProperties);
   } catch (e) {
-    return res.status(500).send({ message: extractErrorMessage(e) });
+    throw Error(extractErrorMessage(e));
   }
 });
 
@@ -56,24 +55,24 @@ router.post("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
   const { lead_property_group_id, lead_property_type_id, label, description } =
     req.body;
-
   /* Check for required fields */
 
   if (lead_property_group_id === null) {
-    return res
-      .status(400)
-      .send({ message: "Missing `lead_property_group_id` field" });
+    throw Error("Missing `lead_property_group_id` field");
   }
   if (lead_property_type_id === null) {
-    return res
-      .status(400)
-      .send({ message: "Missing `lead_property_type_id` field" });
+    throw Error("Missing `lead_property_type_id` field");
   }
   if (label === null) {
-    return res.status(400).send({ message: "Missing `label` field" });
+    throw Error("Missing `label` field");
   }
 
   try {
+    
+    const existingRecords = await db<LeadStandardProperty>("lead_standard_property").select().where({name: createValueFromLabel(label)});
+    if (existingRecords.length > 0) {
+      throw Error("Property already exists!");
+    }
     const newLeadCustomProperty = await db<LeadCustomProperty>(
       "lead_custom_property",
     )
@@ -88,15 +87,45 @@ router.post("/", async (req, res) => {
       .returning("*");
 
     if (newLeadCustomProperty.length !== 1) {
-      return res.status(400).send({
-        message:
-          "An error occurred when creating the LeadCustomProperty record",
-      });
+      throw Error(
+        "An error occurred when creating the LeadCustomProperty record",
+      );
     }
 
     return res.status(200).send(newLeadCustomProperty[0]);
   } catch (e) {
-    return res.status(500).send({ message: extractErrorMessage(e) });
+    if ((e as { code: string }).code === "23505") {
+      throw Error("Property already exists");
+    }
+
+    throw Error(extractErrorMessage(e));
+  }
+});
+
+// Delete a Custom Property
+router.delete("/:name", async (req, res) => {
+  const { id } = res.locals.jwt_decoded;
+  const { name } = req.params;
+  try {
+    // Check if the LeadCustomProperty exists
+    const existingLeadCustomProperty = await db<LeadCustomProperty>(
+      "lead_custom_property",
+    )
+      .where({ user_id: id, name })
+      .first();
+
+    if (!existingLeadCustomProperty) {
+      throw Error("LeadCustomProperty not found");
+    }
+
+    // Delete the LeadCustomProperty
+    await db<LeadCustomProperty>("lead_custom_property")
+      .where({ user_id: id, name })
+      .del();
+
+    return res.status(200).json({ message: "Successfully deleted!" });
+  } catch (e) {
+    throw Error("There was an error deleting the property");
   }
 });
 

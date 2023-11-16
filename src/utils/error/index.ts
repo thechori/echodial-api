@@ -8,7 +8,7 @@ export const extractErrorMessage = (
   error: unknown,
   message = "There was an error. Please try again later.",
 ) => {
-  if (error === null || error === undefined) return null;
+  if (error === null || error === undefined) return undefined;
   if (error instanceof Error) {
     return error.message;
   }
