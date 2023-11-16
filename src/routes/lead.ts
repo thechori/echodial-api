@@ -217,7 +217,6 @@ router.post("/csv/validate", async (req, res) => {
     return res.json(returnObject);
   }
   if (propertyToCheck === "phone") {
-    console.log(dataArray);
     const validPhoneNumbers = dataArray.every((value: any) => {
       // Remove non-digit characters
       if (!value) {
