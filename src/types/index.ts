@@ -123,7 +123,7 @@ export type Lead = {
   first_name: string | null;
   last_name: string | null;
   email: string | null;
-  phone: string;
+  phone: string | null;
   address1: string | null;
   address2: string | null;
   city: string | null;
