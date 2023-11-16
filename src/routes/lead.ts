@@ -217,8 +217,12 @@ router.post("/csv/validate", async (req, res) => {
     return res.json(returnObject);
   }
   if (propertyToCheck === "phone") {
+    console.log(dataArray);
     const validPhoneNumbers = dataArray.every((value: any) => {
       // Remove non-digit characters
+      if (!value) {
+        return true;
+      }
       const cleanedValue = value.toString().replace(/\D/g, '');
       
       // Check if the cleaned value matches the desired phone number patterns
