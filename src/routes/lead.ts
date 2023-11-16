@@ -246,11 +246,19 @@ router.post("/csv/validate", async (req, res) => {
     "lead",
   ).columnInfo(propertyToCheck)
   
+  
   //check for null values
   if (!leadsColumnInfo.nullable && dataArray.includes(null)) {
     returnObject.message = "Values in this column can't be empty"
     return res.json(returnObject);
   }
+  //if columnInfo is int4, all values must be numbers 
+  if (leadsColumnInfo.type === "integer") {
+    console.log("check")
+    const dataArrayAllNumbers = dataArray.every((element : any) => (element === null || typeof element === 'number'));
+    console.log(dataArrayAllNumbers)
+  }
+
   //check if all values are under max length
   if (leadsColumnInfo.maxLength) {
     const dataArrayToStrings = dataArray.map((data : any) => (data !== null ? data.toString() : ""));
@@ -285,7 +293,6 @@ router.post("/csv", upload.single("file"), function (req, res) {
       fileRows.push(data); // push each row
     })
     .on("end", async function () {
-      console.log(source);
       try {
           // @ts-ignore
         fs.unlinkSync(req.file.path); // Remove temp file
