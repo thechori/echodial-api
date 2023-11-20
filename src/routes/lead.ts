@@ -225,7 +225,8 @@ router.post("/csv/validate", async (req, res) => {
       const cleanedValue = value.toString().replace(/\D/g, '');
       
       // Check if the cleaned value matches the desired phone number patterns
-      return isValidPhoneNumberForDb(value.toString()) || /^\d{10}$/.test(cleanedValue)
+      return isValidPhoneNumberForDb(value.toString()) || /^\d{10}$/.test(cleanedValue) || /^1\d{10}$/.test(cleanedValue)
+
     });
     if (!validPhoneNumbers) {
       returnObject.message = "Invalid phone number format";
