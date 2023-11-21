@@ -89,10 +89,11 @@ export type Call = {
 export type CallerId = {
   id: number;
   user_id: number | null;
-  twilio_sid: string;
+  twilio_sid: string | null;
   phone_number: string;
   created_at: Date;
   updated_at: Date;
+  email: string;
 };
 
 export type IncomingNumber = {

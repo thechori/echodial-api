@@ -180,22 +180,21 @@ router.post("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
   const { email, phone, first_name, last_name, source } = req.body;
 
-  if (!phone) {
-    return res.status(400).send("New lead must have at least a phone number");
-  }
+  let phoneNumberForDb;
+  if (phone) {
+    // Trim and strip all non-numeric characters
+    phoneNumberForDb = transformPhoneNumberForDb(phone);
 
-  // Trim and strip all non-numeric characters
-  const phoneNumberForDb = transformPhoneNumberForDb(phone);
-
-  if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
-    return res.status(400).send("Invalid phone number");
+    if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
+      return res.status(400).send("Invalid phone number");
+    }
   }
 
   try {
     const newLead = await db<Lead>("lead").insert({
       user_id: id,
       email,
-      phone: phoneNumberForDb, // Note: Hardcoding country code for best UX
+      phone: phoneNumberForDb,
       first_name,
       last_name,
       source,
@@ -208,12 +207,11 @@ router.post("/", async (req, res) => {
 });
 
 router.post("/csv/validate", async (req, res) => {
-  const { id } = res.locals.jwt_decoded;
-  const dataArray = JSON.parse(req.body.columnData)
+  const dataArray = JSON.parse(req.body.columnData);
   const propertyToCheck = req.body.propertyToCheck;
-  const returnObject = {message: "", error: true};
+  const returnObject = { message: "", error: true };
   if (dataArray.length < 1) {
-    returnObject.message = "No data to validate"
+    returnObject.message = "No data to validate";
     return res.json(returnObject);
   }
   if (propertyToCheck === "phone") {
@@ -222,11 +220,14 @@ router.post("/csv/validate", async (req, res) => {
       if (!value) {
         return true;
       }
-      const cleanedValue = value.toString().replace(/\D/g, '');
-      
-      // Check if the cleaned value matches the desired phone number patterns
-      return isValidPhoneNumberForDb(value.toString()) || /^\d{10}$/.test(cleanedValue) || /^1\d{10}$/.test(cleanedValue)
+      const cleanedValue = value.toString().replace(/\D/g, "");
 
+      // Check if the cleaned value matches the desired phone number patterns
+      return (
+        isValidPhoneNumberForDb(value.toString()) ||
+        /^\d{10}$/.test(cleanedValue) ||
+        /^1\d{10}$/.test(cleanedValue)
+      );
     });
     if (!validPhoneNumbers) {
       returnObject.message = "Invalid phone number format";
@@ -238,44 +239,47 @@ router.post("/csv/validate", async (req, res) => {
   }
   const leadStandardProperties: LeadStandardProperty[] = await db(
     "lead_standard_property",
-  ).select("name")
-  
-  const leadStandardPropertiesValues = leadStandardProperties.map(obj => obj.name);
-  if (!(leadStandardPropertiesValues.includes(propertyToCheck))) {
+  ).select("name");
+
+  const leadStandardPropertiesValues = leadStandardProperties.map(
+    (obj) => obj.name,
+  );
+  if (!leadStandardPropertiesValues.includes(propertyToCheck)) {
     returnObject.message = "No need to validate!";
     returnObject.error = false;
     return res.json(returnObject);
   }
-  const leadsColumnInfo: any = await db(
-    "lead",
-  ).columnInfo(propertyToCheck)
-  
-  
+  const leadsColumnInfo: any = await db("lead").columnInfo(propertyToCheck);
+
   //check for null values
   if (!leadsColumnInfo.nullable && dataArray.includes(null)) {
-    returnObject.message = "Values in this column can't be empty"
+    returnObject.message = "Values in this column can't be empty";
     return res.json(returnObject);
   }
 
   //check if all values are under max length
   if (leadsColumnInfo.maxLength) {
-    const dataArrayToStrings = dataArray.map((data : any) => (data !== null ? data.toString() : ""));
+    const dataArrayToStrings = dataArray.map((data: any) =>
+      data !== null ? data.toString() : "",
+    );
 
-    const allValuesUnderMaxLength = dataArrayToStrings.every((value: any) => value.length <= leadsColumnInfo.maxLength);
+    const allValuesUnderMaxLength = dataArrayToStrings.every(
+      (value: any) => value.length <= leadsColumnInfo.maxLength,
+    );
 
     if (!allValuesUnderMaxLength) {
-      returnObject.message = "Values are too long"
+      returnObject.message = "Values are too long";
       return res.json(returnObject);
     }
   }
-  
+
   returnObject.error = false;
   return res.json(returnObject);
 });
 
 router.post("/csv", upload.single("file"), function (req, res) {
   const { id } = res.locals.jwt_decoded;
-  const source  = req.body.source;
+  const source = req.body.source;
 
   // Validate file existence
   if (!req.file) {
@@ -286,66 +290,73 @@ router.post("/csv", upload.single("file"), function (req, res) {
   const fileRows: string[][] = []; // [ ["1", "ryan", "teodoro", "thechori@gmail.com", "+18326460869"], [...], [...] ]
   try {
     csv
-    .parseFile(req.file.path)
-    .on("data", function (data: any) {
-      fileRows.push(data); // push each row
-    })
-    .on("end", async function () {
-      try {
+      .parseFile(req.file.path)
+      .on("data", function (data: any) {
+        fileRows.push(data); // push each row
+      })
+      .on("end", async function () {
+        try {
           // @ts-ignore
-        fs.unlinkSync(req.file.path); // Remove temp file
+          fs.unlinkSync(req.file.path); // Remove temp file
 
-        // Check for length
-        if (fileRows.length < 2) {
-          res.status(400).send("CSV file has no data");
-        }
-        const leadStandardProperties: LeadStandardProperty[] = await db(
-          "lead_standard_property",
-        ).select("name")
-        const standardProperties = leadStandardProperties.map(item => item.name);
-        const fileBody = fileRows.slice(1);
-        for (let row = 0; row < fileBody.length; row++) {
-          const newEntry : any = {};
-          for (let col = 0; col < fileBody[row].length; col++) {
-            if (mappingArray[col].mapped) {
-              const property : string = mappingArray[col].property;
-              //check if property is in Standard Properties
-              //else insert into Custom Properties 
-              if (standardProperties.includes(property)) {
-                if (property === "phone") {
-                  newEntry[property] = transformPhoneNumberForDb(fileBody[row][col].toString());
+          // Check for length
+          if (fileRows.length < 2) {
+            res.status(400).send("CSV file has no data");
+          }
+          const leadStandardProperties: LeadStandardProperty[] = await db(
+            "lead_standard_property",
+          ).select("name");
+          const standardProperties = leadStandardProperties.map(
+            (item) => item.name,
+          );
+          const fileBody = fileRows.slice(1);
+          for (let row = 0; row < fileBody.length; row++) {
+            const newEntry: any = {};
+            for (let col = 0; col < fileBody[row].length; col++) {
+              if (mappingArray[col].mapped) {
+                const property: string = mappingArray[col].property;
+                //check if property is in Standard Properties
+                //else insert into Custom Properties
+                if (standardProperties.includes(property)) {
+                  if (property === "phone") {
+                    newEntry[property] = transformPhoneNumberForDb(
+                      fileBody[row][col].toString(),
+                    );
+                  } else {
+                    newEntry[property] = fileBody[row][col];
+                  }
                 } else {
-                  newEntry[property] = fileBody[row][col];
-                }
-              } else {
-                const valueToAdd = {[property]: fileBody[row][col]};
-                if ("custom_properties" in newEntry) {
-                  const existingCustomProperties = newEntry["custom_properties"];
-                  newEntry["custom_properties"] = { ...existingCustomProperties, ...valueToAdd };
-                } else {
-                  newEntry["custom_properties"] = valueToAdd;
+                  const valueToAdd = { [property]: fileBody[row][col] };
+                  if ("custom_properties" in newEntry) {
+                    const existingCustomProperties =
+                      newEntry["custom_properties"];
+                    newEntry["custom_properties"] = {
+                      ...existingCustomProperties,
+                      ...valueToAdd,
+                    };
+                  } else {
+                    newEntry["custom_properties"] = valueToAdd;
+                  }
                 }
               }
             }
+            newEntry["user_id"] = id;
+            newEntry["source"] = source;
+            await db<Lead>("lead").insert(newEntry);
           }
-          newEntry["user_id"] = id;
-          newEntry["source"] = source;
-          await db<Lead>("lead").insert(newEntry);
+          res.status(200).json({
+            message: `Successfully uploaded leads`,
+          });
+        } catch (e) {
+          return res.status(500).send({ message: extractErrorMessage(e) });
         }
-        res.status(200).json({
-          message: `Successfully uploaded leads`,
-        });
-      } catch (e) {
+      })
+      .on("error", (e: any) => {
         return res.status(500).send({ message: extractErrorMessage(e) });
-      }
-    })
-    .on("error", (e: any) => {
-      return res.status(500).send({ message: extractErrorMessage(e) });
-    });
+      });
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
-  };
-  
+  }
 });
 
 router.get("/pretty", async (req, res) => {

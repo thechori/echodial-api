@@ -32,7 +32,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // CORS is configured to handle cross-origin cookies
 app.use(
   cors({
-    origin: [envConfig.clientHost], // Your frontend's origin
+    origin: [envConfig.clientHost, "https://staging.app.unagidialer.com"], // Your frontend's origin
     credentials: true, // To accept cookies via cross-origin requests
   }),
 );

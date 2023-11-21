@@ -10,11 +10,12 @@ import {
   transformPhoneNumberForDb,
 } from "../utils/validators/phone";
 import envConfig from "../configs/env";
+import { superUserAuthMiddleware } from "../middlewares/super-user";
 
 const router = Router();
 
 // Returns all of the verified, user-owned outgoing caller ids from Twilio directly
-router.get("/verified", (req, res) => {
+router.get("/verified", superUserAuthMiddleware, (req, res) => {
   twilioClient.outgoingCallerIds
     .list()
     .then((callerIds) => {
@@ -26,7 +27,7 @@ router.get("/verified", (req, res) => {
 });
 
 // Returns all of the Twilio-owned outgoing caller ids from Twilio directly
-router.get("/twilio", (req, res) => {
+router.get("/twilio", superUserAuthMiddleware, (req, res) => {
   twilioClient.incomingPhoneNumbers
     .list()
     .then((incomingPhoneNumbers) => {
@@ -37,20 +38,59 @@ router.get("/twilio", (req, res) => {
     });
 });
 
+// TODO: Remediate tech debt here
+// Note: Hacky endpoint for simplicity -- the steps should be broken apart so that we're not always hitting Twilio to check for new numbers (should only be done when updating numbers via Account Settings)
 // Return user-owned Caller IDs
 router.get("/", async (req, res) => {
-  const { id } = res.locals.jwt_decoded;
+  const { id, email } = res.locals.jwt_decoded;
 
-  try {
-    const caller_ids = await db<CallerId>("caller_id").where("user_id", id);
-    return res.status(200).send(caller_ids);
-  } catch (e) {
-    return res.status(500).send({ message: extractErrorMessage(e) });
+  // First, hit Twilio to get the most up-to-date list of outgoingCallerIds
+  const _twilioCallerIds = await twilioClient.outgoingCallerIds.list();
+
+  const twilioCallerIds = _twilioCallerIds.filter(
+    (cid) => cid.friendlyName === email,
+  );
+  if (!twilioCallerIds.length) {
+    return res
+      .status(404)
+      .json("No Twilio outbound caller IDs found with email");
   }
+
+  // Get local app list
+  let appCallerIds = await db<CallerId>("caller_id").where("user_id", id);
+
+  // Identify any discrepancies (Filter by `twilio_sid` === null), make updates to app DB, return new data
+  const callerIdsWithNoSid = appCallerIds.filter(
+    (acid) => acid.twilio_sid === null,
+  );
+  if (callerIdsWithNoSid.length) {
+    // Found a record that needs a Twilio SID for the outgoingCallerId (let's assume there's just one at index 0 for now)
+    const record = callerIdsWithNoSid[0];
+
+    // Identify the match in the `twilioCallerIds`
+    const match = twilioCallerIds.find(
+      (tcid) => tcid.friendlyName === record.email,
+    );
+    if (!match)
+      throw Error(
+        "No matching Twilio outbound caller ID found with email found in database",
+      );
+
+    await db<CallerId>("caller_id").where("id", record.id).update({
+      twilio_sid: match.sid,
+    });
+
+    // Return new results and update variable
+    appCallerIds = await db<CallerId>("caller_id").where("user_id", id);
+  }
+
+  // Return caller ids
+  return res.status(200).send(appCallerIds);
 });
 
 // Creates a new verified outgoing caller id
-router.post("/", async (req, res) => {
+router.post("/request", async (req, res) => {
+  const { id, email } = res.locals.jwt_decoded;
   const { phone_number } = req.body;
 
   if (!phone_number) {
@@ -66,58 +106,45 @@ router.post("/", async (req, res) => {
 
   // Hit Twilio API
   // Note: We do NOT use .outgoingCallerIds.create() -- this does not exist (very confusing, IMO)
-  let validationRequest;
-  try {
-    validationRequest = await twilioClient.validationRequests.create({
-      phoneNumber: phoneNumberForDb,
-      friendlyName: res.locals.jwt_decoded.email, // Setting `email` as `friendlyName` for ease of observation in Twilio dashboard
-    });
+  const validationRequest = await twilioClient.validationRequests.create({
+    phoneNumber: phoneNumberForDb,
+    friendlyName: res.locals.jwt_decoded.email, // Setting `email` as `friendlyName` for ease of observation in Twilio dashboard
+  });
 
-    // Send SMS to `validationRequest.phoneNumber` to give them the confirmation code to use within the Twilio phone call
-    console.log(
-      `sending validation code (${validationRequest.validationCode}) to ${phoneNumberForDb}`,
-    );
-    twilioClient.messages.create({
-      body: `Validation code: ${validationRequest.validationCode}`,
-      from: numbers.echoDialSmsSender,
-      to: phoneNumberForDb,
-      messagingServiceSid: envConfig.messagingServiceSid,
-    });
-  } catch (e) {
-    return res.status(500).send({ message: extractErrorMessage(e) });
-  }
+  twilioClient.messages.create({
+    body: `Validation code: ${validationRequest.validationCode}`,
+    from: numbers.echoDialSmsSender,
+    to: phoneNumberForDb,
+    messagingServiceSid: envConfig.messagingServiceSid,
+  });
 
   if (!validationRequest)
     return res.status(400).send("Validation request object missing.");
-
-  const { id } = res.locals.jwt_decoded;
 
   // Store info in DB
   const newCallerId: Omit<CallerId, "id" | "created_at" | "updated_at"> = {
     phone_number: phoneNumberForDb,
     user_id: id,
-    twilio_sid: validationRequest.callSid, // TODO: Have a bad feeling this SID won't be usable and we'll have to do some manual matching AFTER the validation request has fulfilled and the proper SID has been assined to the entity
+    email: email,
+    twilio_sid: null, // Initialize this as null because we don't have a completed request yet
   };
 
-  try {
-    await db<CallerId>("caller_id").insert(newCallerId);
-    return res.status(200).send();
-  } catch (e) {
-    return res.status(500).json({ message: extractErrorMessage(e) });
-  }
+  await db<CallerId>("caller_id").insert(newCallerId);
+  return res.status(200).send();
 });
 
 // TODO: Add logic to check if the user owns the number BEFORE allowing them to delete
 // We do not want people deleting Caller IDs that don't belong to them
 //
 // Delete FIRST from Twilio AND THEN from our DB
-router.post("/delete", async (req, res) => {
-  const { id, phone_number } = req.body;
+router.delete("/", async (req, res) => {
+  const { phone_number } = req.body;
+  const { email } = res.locals.jwt_decoded;
 
-  if (id === null) {
-    return res.status(400).send("Missing `id` field");
+  if (email === null) {
+    return res.status(400).send("Missing `email` field");
   } else if (phone_number === null) {
-    return res.status(400).send("Missing `twilio_sid` field");
+    return res.status(400).send("Missing `phone_number` field");
   }
 
   let twilio_sid_found: string | undefined;
@@ -125,14 +152,12 @@ router.post("/delete", async (req, res) => {
   // Fetch Twilio Caller IDs
   try {
     const outgoingCallerIds = await twilioClient.outgoingCallerIds.list();
-    console.log("outgoingCallerIds", outgoingCallerIds);
     const callerIdMatch = outgoingCallerIds.find(
-      (cid) => cid.phoneNumber === phone_number,
+      (cid) => cid.phoneNumber === phone_number && cid.friendlyName === email,
     );
     if (!callerIdMatch)
-      throw "No caller id record found with that phone number";
+      throw "No caller id record found with that phone number and email";
     twilio_sid_found = callerIdMatch.sid;
-    console.log("sid found: ", twilio_sid_found);
   } catch (e) {
     console.error(e);
     // Note: Opting not to send response just yet to check for a stale entry
@@ -142,18 +167,19 @@ router.post("/delete", async (req, res) => {
   // Delete Twilio Caller ID (if an SID was found)
   if (twilio_sid_found) {
     try {
-      const a = await twilioClient.outgoingCallerIds(twilio_sid_found).remove();
-      console.log("a", a);
+      await twilioClient.outgoingCallerIds(twilio_sid_found).remove();
     } catch (e) {
-      console.error(e);
       // Note: Opting not to send response just yet to check for a stale entry
       // in the DB which we can clear out in the following step
+      console.error(e);
     }
   }
 
   // Delete EchoDial Caller ID
   try {
-    const dbResult = await db<CallerId>("caller_id").del().where("id", id);
+    const dbResult = await db<CallerId>("caller_id")
+      .del()
+      .where("email", email);
     return res.status(200).send(dbResult);
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });

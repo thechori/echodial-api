@@ -8,4 +8,4 @@ npm run lint
 npm run pretty-quick
 
 # Generate types from DB schema
-npm run generate-types:dev
+npm run generate-types
