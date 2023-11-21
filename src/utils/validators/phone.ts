@@ -28,7 +28,7 @@ export const transformPhoneNumberForDb = (input: string) => {
   const digits = trimmedVal.replace(/\D/g, "");
 
   // Check if the digits have length 11 and the first digit is '1'
-  if (digits.length === 11 && digits.charAt(0) === '1') {
+  if (digits.length === 11 && digits.charAt(0) === "1") {
     // If it is, append "+" and return
     return `+${digits}`;
   } else {

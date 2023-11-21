@@ -68,8 +68,11 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    
-    const existingRecords = await db<LeadStandardProperty>("lead_standard_property").select().where({name: createValueFromLabel(label)});
+    const existingRecords = await db<LeadStandardProperty>(
+      "lead_standard_property",
+    )
+      .select()
+      .where({ name: createValueFromLabel(label) });
     if (existingRecords.length > 0) {
       throw Error("Property already exists!");
     }
