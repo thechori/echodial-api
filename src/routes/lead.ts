@@ -225,7 +225,8 @@ router.post("/csv/validate", async (req, res) => {
       // Check if the cleaned value matches the desired phone number patterns
       return (
         isValidPhoneNumberForDb(value.toString()) ||
-        /^\d{10}$/.test(cleanedValue)
+        /^\d{10}$/.test(cleanedValue) ||
+        /^1\d{10}$/.test(cleanedValue)
       );
     });
     if (!validPhoneNumbers) {
