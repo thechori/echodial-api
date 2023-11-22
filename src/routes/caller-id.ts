@@ -19,10 +19,10 @@ router.get("/verified", superUserAuthMiddleware, (req, res) => {
   twilioClient.outgoingCallerIds
     .list()
     .then((callerIds) => {
-      res.status(200).send(callerIds);
+      res.status(200).json(callerIds);
     })
     .catch((e: unknown) => {
-      res.status(500).send(extractErrorMessage(e));
+      res.status(500).json(extractErrorMessage(e));
     });
 });
 
@@ -31,10 +31,10 @@ router.get("/twilio", superUserAuthMiddleware, (req, res) => {
   twilioClient.incomingPhoneNumbers
     .list()
     .then((incomingPhoneNumbers) => {
-      res.status(200).send(incomingPhoneNumbers);
+      res.status(200).json(incomingPhoneNumbers);
     })
     .catch((e: unknown) => {
-      res.status(500).send(extractErrorMessage(e));
+      res.status(500).json(extractErrorMessage(e));
     });
 });
 
@@ -83,7 +83,7 @@ router.get("/", async (req, res) => {
   }
 
   // Return caller ids
-  return res.status(200).send(appCallerIds);
+  return res.status(200).json(appCallerIds);
 });
 
 // Creates a new verified outgoing caller id
@@ -99,7 +99,7 @@ router.post("/request", async (req, res) => {
   const phoneNumberForDb = transformPhoneNumberForDb(phone_number);
 
   if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
-    return res.status(400).send("Phone number is not valid");
+    return res.status(400).json("Phone number is not valid");
   }
 
   // Handle retried request
@@ -128,7 +128,7 @@ router.post("/request", async (req, res) => {
   });
 
   if (!validationRequest)
-    return res.status(400).send("Validation request object missing.");
+    return res.status(400).json("Validation request object missing.");
 
   // Store info in DB
   const newCallerId: Omit<CallerId, "id" | "created_at" | "updated_at"> = {
@@ -147,7 +147,7 @@ router.post("/request", async (req, res) => {
     await db<CallerId>("caller_id").insert(newCallerId);
   }
 
-  return res.status(200).send();
+  return res.status(200).json();
 });
 
 // TODO: Add logic to check if the user owns the number BEFORE allowing them to delete
@@ -159,9 +159,9 @@ router.delete("/", async (req, res) => {
   const { email } = res.locals.jwt_decoded;
 
   if (email === null) {
-    return res.status(400).send("Missing `email` field");
+    return res.status(400).json("Missing `email` field");
   } else if (phone_number === null) {
-    return res.status(400).send("Missing `phone_number` field");
+    return res.status(400).json("Missing `phone_number` field");
   }
 
   let twilio_sid_found: string | undefined;
@@ -195,12 +195,11 @@ router.delete("/", async (req, res) => {
   // Delete EchoDial Caller ID
   try {
     const dbResult = await db<CallerId>("caller_id")
-      .del()
-      .where("email", email);
-    return res.status(200).send(dbResult);
+      .where("email", email)
+      .del();
+    return res.status(200).json(dbResult);
   } catch (e) {
-    console.log("eeee", e);
-    return res.status(500).send({ message: extractErrorMessage(e) });
+    return res.status(500).json(extractErrorMessage(e));
   }
 });
 
