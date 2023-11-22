@@ -33,7 +33,7 @@ _TODO: Update docs once multiple environments are setup_
   - See instructions [here](https://echodial.com) for details on how to do this
     - _TODO: Create doc for this_
 
-- Database migrations are used to update the Postgres schema via knex. When these are completed, be sure to also run the npm script (`npm run generate-types:dev`) in order to properly update the generates types within the app (output will be at `src/types/index.ts`)
+- Database migrations are used to update the Postgres schema via knex. When these are completed, be sure to also run the npm script (`npm run generate-types`) in order to properly update the generates types within the app (output will be at `src/types/index.ts`)
 
 ## Notes
 
