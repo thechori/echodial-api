@@ -159,9 +159,9 @@ router.delete("/", async (req, res) => {
       throw "No caller id record found with that phone number and email";
     twilio_sid_found = callerIdMatch.sid;
   } catch (e) {
-    console.error(e);
     // Note: Opting not to send response just yet to check for a stale entry
     // in the DB which we can clear out in the following step
+    console.error(e);
   }
 
   // Delete Twilio Caller ID (if an SID was found)
