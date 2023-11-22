@@ -51,9 +51,7 @@ router.get("/", async (req, res) => {
     (cid) => cid.friendlyName === email,
   );
   if (!twilioCallerIds.length) {
-    return res
-      .status(404)
-      .json("No Twilio outbound caller IDs found with email");
+    return res.status(200).json([]);
   }
 
   // Get local app list
@@ -104,6 +102,17 @@ router.post("/request", async (req, res) => {
     return res.status(400).send("Phone number is not valid");
   }
 
+  // Handle retried request
+  // Check for existing entry in our DB
+  const existingRecord = await db<CallerId>("caller_id")
+    .where("phone_number", phoneNumberForDb)
+    .first();
+
+  // If there is an entry with twilio_sid - let them know this already exists
+  if (existingRecord && existingRecord.twilio_sid) {
+    return res.status(400).json("This phone number is already verified");
+  }
+
   // Hit Twilio API
   // Note: We do NOT use .outgoingCallerIds.create() -- this does not exist (very confusing, IMO)
   const validationRequest = await twilioClient.validationRequests.create({
@@ -129,7 +138,15 @@ router.post("/request", async (req, res) => {
     twilio_sid: null, // Initialize this as null because we don't have a completed request yet
   };
 
-  await db<CallerId>("caller_id").insert(newCallerId);
+  // Update or insert depending on if `existingRecord` is null or not
+  if (existingRecord) {
+    await db<CallerId>("caller_id").update({
+      updated_at: new Date(), // Nothing really changed, but we can update the timestamp
+    });
+  } else {
+    await db<CallerId>("caller_id").insert(newCallerId);
+  }
+
   return res.status(200).send();
 });
 
@@ -182,6 +199,7 @@ router.delete("/", async (req, res) => {
       .where("email", email);
     return res.status(200).send(dbResult);
   } catch (e) {
+    console.log("eeee", e);
     return res.status(500).send({ message: extractErrorMessage(e) });
   }
 });
