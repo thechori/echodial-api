@@ -42,48 +42,60 @@ router.get("/twilio", superUserAuthMiddleware, (req, res) => {
 // Note: Hacky endpoint for simplicity -- the steps should be broken apart so that we're not always hitting Twilio to check for new numbers (should only be done when updating numbers via Account Settings)
 // Return user-owned Caller IDs
 router.get("/", async (req, res) => {
-  const { id, email } = res.locals.jwt_decoded;
+  const { email } = res.locals.jwt_decoded;
 
   // First, hit Twilio to get the most up-to-date list of outgoingCallerIds
-  const _twilioCallerIds = await twilioClient.outgoingCallerIds.list();
+  const allTwilioCallerIds = await twilioClient.outgoingCallerIds.list();
 
-  const twilioCallerIds = _twilioCallerIds.filter(
+  // Only show user's numbers
+  const userTwilioCallerIds = allTwilioCallerIds.filter(
     (cid) => cid.friendlyName === email,
   );
-  if (!twilioCallerIds.length) {
+
+  // Handle no records found
+  if (!userTwilioCallerIds.length) {
     return res.status(200).json([]);
   }
 
   // Get local app list
-  let appCallerIds = await db<CallerId>("caller_id").where("user_id", id);
+  let appUserCallerIds = await db<CallerId>("caller_id").where("email", email);
 
   // Identify any discrepancies (Filter by `twilio_sid` === null), make updates to app DB, return new data
-  const callerIdsWithNoSid = appCallerIds.filter(
+  const appUserCallerIdsWithNoTwilioSid = appUserCallerIds.filter(
     (acid) => acid.twilio_sid === null,
   );
-  if (callerIdsWithNoSid.length) {
-    // Found a record that needs a Twilio SID for the outgoingCallerId (let's assume there's just one at index 0 for now)
-    const record = callerIdsWithNoSid[0];
 
-    // Identify the match in the `twilioCallerIds`
-    const match = twilioCallerIds.find(
-      (tcid) => tcid.friendlyName === record.email,
+  if (appUserCallerIdsWithNoTwilioSid.length) {
+    // Found a record that needs a Twilio SID for the outgoingCallerId (let's assume there's just one at index 0 for now -- they can't really have two open at once)
+    const appRecordWithoutTwilioSid = appUserCallerIdsWithNoTwilioSid[0];
+
+    // Identify the match in the `userTwilioCallerIds`
+    const match = userTwilioCallerIds.find(
+      (tcid) =>
+        tcid.friendlyName === appRecordWithoutTwilioSid.email &&
+        tcid.phoneNumber === appRecordWithoutTwilioSid.phone_number,
     );
-    if (!match)
-      throw Error(
+
+    if (match) {
+      // Update twilio_sid
+      await db<CallerId>("caller_id")
+        .where("id", appRecordWithoutTwilioSid.id)
+        .update({
+          twilio_sid: match.sid,
+          updated_at: new Date(),
+        });
+    } else {
+      console.error(
         "No matching Twilio outbound caller ID found with email found in database",
       );
+    }
 
-    await db<CallerId>("caller_id").where("id", record.id).update({
-      twilio_sid: match.sid,
-    });
-
-    // Return new results and update variable
-    appCallerIds = await db<CallerId>("caller_id").where("user_id", id);
+    // Return new results
+    appUserCallerIds = await db<CallerId>("caller_id").where("email", email);
   }
 
   // Return caller ids
-  return res.status(200).json(appCallerIds);
+  return res.status(200).json(appUserCallerIds);
 });
 
 // Creates a new verified outgoing caller id
@@ -105,7 +117,10 @@ router.post("/request", async (req, res) => {
   // Handle retried request
   // Check for existing entry in our DB
   const existingRecord = await db<CallerId>("caller_id")
-    .where("phone_number", phoneNumberForDb)
+    .where({
+      email,
+      phone_number: phoneNumberForDb,
+    })
     .first();
 
   // If there is an entry with twilio_sid - let them know this already exists
@@ -140,9 +155,14 @@ router.post("/request", async (req, res) => {
 
   // Update or insert depending on if `existingRecord` is null or not
   if (existingRecord) {
-    await db<CallerId>("caller_id").update({
-      updated_at: new Date(), // Nothing really changed, but we can update the timestamp
-    });
+    await db<CallerId>("caller_id")
+      .where({
+        email,
+        phone_number,
+      })
+      .update({
+        updated_at: new Date(), // Nothing really changed, but we can update the timestamp
+      });
   } else {
     await db<CallerId>("caller_id").insert(newCallerId);
   }
@@ -195,7 +215,10 @@ router.delete("/", async (req, res) => {
   // Delete EchoDial Caller ID
   try {
     const dbResult = await db<CallerId>("caller_id")
-      .where("email", email)
+      .where({
+        email,
+        phone_number,
+      })
       .del();
     return res.status(200).json(dbResult);
   } catch (e) {
