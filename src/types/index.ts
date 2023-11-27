@@ -135,7 +135,6 @@ export type Lead = {
   updated_at: Date;
   user_id: number;
   call_count: number;
-  sale_amount: number | null;
   sale_commission: number | null;
   sale_cost: number | null;
   sale_notes: string | null;
