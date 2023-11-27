@@ -178,8 +178,8 @@ router.post("/bulk-delete", async (req, res) => {
 // Create new Lead (single)
 router.post("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
-  const { email, phone, first_name, last_name, source } = req.body;
-
+  // const { email, phone, first_name, last_name, source } = req.body;
+  const phone = req.body.phone
   let phoneNumberForDb;
   if (phone) {
     // Trim and strip all non-numeric characters
@@ -189,15 +189,11 @@ router.post("/", async (req, res) => {
       return res.status(400).send("Invalid phone number");
     }
   }
-
   try {
     const newLead = await db<Lead>("lead").insert({
       user_id: id,
-      email,
-      phone: phoneNumberForDb,
-      first_name,
-      last_name,
-      source,
+      ...req.body,
+      phone: phoneNumberForDb
     });
 
     return res.status(200).send(newLead);
