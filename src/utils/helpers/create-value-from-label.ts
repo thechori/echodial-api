@@ -9,7 +9,6 @@ export function createValueFromLabel(label: string) {
   //replace special characters and spaces with "_", consecutive
   //underscores become one underscore
   const replacedLabel = trimmed.replace(/[^\w\s]/g, "_").replace(/_+/g, "_");
-  console.log(replacedLabel.toLowerCase());
 
   // Return final value
   return replacedLabel.toLowerCase();
