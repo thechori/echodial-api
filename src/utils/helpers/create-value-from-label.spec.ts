@@ -63,7 +63,7 @@ describe("createValueFromLabel", () => {
     expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home-slice" -> throw Error("Label cannot contain special characters")
+  // "home-slice" -> "home_slice"
   it("should format special characters to underscores", () => {
     const input = "home-slice";
     const output = "home_slice";
