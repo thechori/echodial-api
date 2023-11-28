@@ -40,14 +40,14 @@ describe("createValueFromLabel", () => {
     expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home'slice" -> equals "home_slice"
+  // "home'slice" -> "home_slice"
   it("should format special characters to underscores", () => {
     const input = "home'slice";
     const output = "home_slice";
     expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home@slice" -> equals "home_slice"
+  // "home@slice" -> "home_slice"
   it("should format special characters to underscores", () => {
     const input = "home@slice";
     const output = "home_slice";
@@ -55,7 +55,7 @@ describe("createValueFromLabel", () => {
     expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home!slice" -> equals "home_slice"
+  // "home!slice" -> "home_slice"
   it("should format special characters to underscores", () => {
     const input = "home!slice";
     const output = "home_slice";
