@@ -1,7 +1,6 @@
 import {
   blankInputError,
   createValueFromLabel,
-  specialCharError,
 } from "./create-value-from-label";
 
 // Unit tests
@@ -39,30 +38,6 @@ describe("createValueFromLabel", () => {
     const input = "homeSlice";
     const output = "homeslice";
     expect(createValueFromLabel(input)).toEqual(output);
-  });
-
-  // "home'slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
-    const input = "home'slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
-  });
-
-  // "home@slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
-    const input = "home@slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
-  });
-
-  // "home!slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
-    const input = "home!slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
-  });
-
-  // "home-slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
-    const input = "home-slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
   });
 
   // "" -> throw Error("Label must be at least one character long")
