@@ -11,7 +11,7 @@ export function createValueFromLabel(label: string) {
   const replacedLabel = trimmed.replace(/[^\w\s]/g, "_").replace(/_+/g, "_");
 
   // Return final value
-  return replacedLabel.toLowerCase();
+  return replacedLabel.toLowerCase().split(" ").join("_");
 }
 
 export const blankInputError = "Label must be at least one character long";

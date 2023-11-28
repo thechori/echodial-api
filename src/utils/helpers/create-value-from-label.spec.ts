@@ -1,7 +1,6 @@
 import {
   blankInputError,
   createValueFromLabel,
-  specialCharError,
 } from "./create-value-from-label";
 
 // Unit tests
@@ -41,28 +40,35 @@ describe("createValueFromLabel", () => {
     expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home'slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
+  // "home'slice" -> "home_slice"
+  it("should format special characters to underscores", () => {
     const input = "home'slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
+    const output = "home_slice";
+    expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home@slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
+  // "home@slice" -> "home_slice"
+  it("should format special characters to underscores", () => {
     const input = "home@slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
+    const output = "home_slice";
+
+    expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home!slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
+  // "home!slice" -> "home_slice"
+  it("should format special characters to underscores", () => {
     const input = "home!slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
+    const output = "home_slice";
+
+    expect(createValueFromLabel(input)).toEqual(output);
   });
 
-  // "home-slice" -> throw Error("Label cannot contain special characters")
-  it("should throw an error", () => {
+  // "home-slice" -> "home_slice"
+  it("should format special characters to underscores", () => {
     const input = "home-slice";
-    expect(() => createValueFromLabel(input)).toThrowError(specialCharError);
+    const output = "home_slice";
+
+    expect(createValueFromLabel(input)).toEqual(output);
   });
 
   // "" -> throw Error("Label must be at least one character long")
