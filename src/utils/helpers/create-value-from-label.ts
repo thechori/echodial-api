@@ -6,16 +6,13 @@ export function createValueFromLabel(label: string) {
   // Check for empty input
   if (trimmed === "") throw new Error(blankInputError);
 
-  // Check for special characters
-  const regex = /[^A-Za-z0-9 ]/;
-  if (regex.test(trimmed)) {
-    // special chars found, throw error
-    throw new Error(specialCharError);
-  }
+  //replace special characters and spaces with "_", consecutive
+  //underscores become one underscore
+  const replacedLabel = label.replace(/[^\w\s]/g, "_").replace(/_+/g, "_");
+  console.log(replacedLabel.toLowerCase());
 
   // Return final value
-  return trimmed.toLowerCase().split(" ").join("_");
+  return replacedLabel.toLowerCase();
 }
 
 export const blankInputError = "Label must be at least one character long";
-export const specialCharError = "Label cannot contain special characters";
