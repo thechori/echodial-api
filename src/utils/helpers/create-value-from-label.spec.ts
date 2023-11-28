@@ -40,6 +40,37 @@ describe("createValueFromLabel", () => {
     expect(createValueFromLabel(input)).toEqual(output);
   });
 
+  // "home'slice" -> equals "home_slice"
+  it("should format special characters to underscores", () => {
+    const input = "home'slice";
+    const output = "home_slice";
+    expect(createValueFromLabel(input)).toEqual(output);
+  });
+
+  // "home@slice" -> equals "home_slice"
+  it("should format special characters to underscores", () => {
+    const input = "home@slice";
+    const output = "home_slice";
+
+    expect(createValueFromLabel(input)).toEqual(output);
+  });
+
+  // "home!slice" -> equals "home_slice"
+  it("should format special characters to underscores", () => {
+    const input = "home!slice";
+    const output = "home_slice";
+
+    expect(createValueFromLabel(input)).toEqual(output);
+  });
+
+  // "home-slice" -> throw Error("Label cannot contain special characters")
+  it("should format special characters to underscores", () => {
+    const input = "home-slice";
+    const output = "home_slice";
+
+    expect(createValueFromLabel(input)).toEqual(output);
+  });
+
   // "" -> throw Error("Label must be at least one character long")
   it("should throw an error", () => {
     const input = "";
