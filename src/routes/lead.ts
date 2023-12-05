@@ -68,15 +68,14 @@ router.put("/:id", async (req, res) => {
   const { body } = req;
   const { phone } = body;
 
-  if (!phone) {
-    return res.status(400).send({ message: "Missing `phone` field" });
-  }
-
   // Validate phone
-  const phoneNumberForDb = transformPhoneNumberForDb(body.phone);
+  let phoneNumberForDb = null;
+  if (phone) {
+    phoneNumberForDb = transformPhoneNumberForDb(body.phone);
 
-  if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
-    return res.status(400).send("Phone number is not valid");
+    if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
+      return res.status(400).send("Phone number is not valid");
+    }
   }
 
   try {
@@ -109,9 +108,10 @@ router.patch("/:id", async (req, res) => {
   const { phone } = body;
 
   // IF phone is changed, validate it
+  let phoneNumberForDb = null;
   if (phone) {
     // Validate phone
-    const phoneNumberForDb = transformPhoneNumberForDb(body.phone);
+    phoneNumberForDb = transformPhoneNumberForDb(body.phone);
 
     if (!isValidPhoneNumberForDb(phoneNumberForDb)) {
       return res.status(400).send("Phone number is not valid");
@@ -123,6 +123,7 @@ router.patch("/:id", async (req, res) => {
       .where("id", id)
       .update({
         ...body,
+        phone: phoneNumberForDb,
         updated_at: new Date().toISOString(), // Note: manually doing this because knex does not support it
       })
       .returning("*");
