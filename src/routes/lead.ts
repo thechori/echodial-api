@@ -235,11 +235,11 @@ router.post("/csv/validate", async (req, res) => {
     }
   }
   const leadStandardProperties: LeadStandardProperty[] = await db(
-    "lead_standard_property",
+    "lead_standard_property"
   ).select("name");
 
   const leadStandardPropertiesValues = leadStandardProperties.map(
-    (obj) => obj.name,
+    (obj) => obj.name
   );
   if (!leadStandardPropertiesValues.includes(propertyToCheck)) {
     returnObject.message = "No need to validate!";
@@ -257,11 +257,11 @@ router.post("/csv/validate", async (req, res) => {
   //check if all values are under max length
   if (leadsColumnInfo.maxLength) {
     const dataArrayToStrings = dataArray.map((data: any) =>
-      data !== null ? data.toString() : "",
+      data !== null ? data.toString() : ""
     );
 
     const allValuesUnderMaxLength = dataArrayToStrings.every(
-      (value: any) => value.length <= leadsColumnInfo.maxLength,
+      (value: any) => value.length <= leadsColumnInfo.maxLength
     );
 
     if (!allValuesUnderMaxLength) {
@@ -301,10 +301,10 @@ router.post("/csv", upload.single("file"), function (req, res) {
             res.status(400).send("CSV file has no data");
           }
           const leadStandardProperties: LeadStandardProperty[] = await db(
-            "lead_standard_property",
+            "lead_standard_property"
           ).select("name");
           const standardProperties = leadStandardProperties.map(
-            (item) => item.name,
+            (item) => item.name
           );
           const fileBody = fileRows.slice(1);
           for (let row = 0; row < fileBody.length; row++) {
@@ -316,9 +316,13 @@ router.post("/csv", upload.single("file"), function (req, res) {
                 //else insert into Custom Properties
                 if (standardProperties.includes(property)) {
                   if (property === "phone") {
-                    newEntry[property] = transformPhoneNumberForDb(
-                      fileBody[row][col].toString(),
-                    );
+                    const phoneNumberString = fileBody[row][col].toString();
+                    if (phoneNumberString.trim() === "") {
+                      newEntry[property] = null;
+                    } else {
+                      newEntry[property] =
+                        transformPhoneNumberForDb(phoneNumberString);
+                    }
                   } else {
                     newEntry[property] = fileBody[row][col];
                   }
@@ -365,7 +369,7 @@ router.get("/pretty", async (req, res) => {
       "lead.created_at",
       "lead.body as message",
       "person.phone as person_phone",
-      "campaign.name as campaign_name",
+      "campaign.name as campaign_name"
     );
   res.status(200).send(leads);
 });
