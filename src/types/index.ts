@@ -15,6 +15,7 @@ export enum Table {
   LeadPropertyType = "lead_property_type",
   LeadStandardProperty = "lead_standard_property",
   LeadStatus = "lead_status",
+  LeadTag = "lead_tag",
   PasswordResetToken = "password_reset_token",
   TrialCredit = "trial_credit",
   User = "user",
@@ -34,6 +35,7 @@ export type Tables = {
   "lead_property_type": LeadPropertyType,
   "lead_standard_property": LeadStandardProperty,
   "lead_status": LeadStatus,
+  "lead_tag": LeadTag,
   "password_reset_token": PasswordResetToken,
   "trial_credit": TrialCredit,
   "user": User,
@@ -135,8 +137,6 @@ export type Lead = {
   updated_at: Date;
   user_id: number;
   call_count: number;
-  sale_commission: number | null;
-  sale_cost: number | null;
   sale_notes: string | null;
   sale_at: Date | null;
   notes: string | null;
@@ -151,6 +151,9 @@ export type Lead = {
   bad_number: boolean | null;
   left_message: boolean | null;
   custom_properties: unknown | null;
+  sale_amount: string | null;
+  sale_commission: string | null;
+  sale_cost: string | null;
 };
 
 export type LeadCustomProperty = {
@@ -191,6 +194,14 @@ export type LeadStatus = {
   value: string;
   description: string | null;
   label: string;
+};
+
+export type LeadTag = {
+  id: number;
+  user_id: number;
+  name: string;
+  label: string;
+  color: string;
 };
 
 export type PasswordResetToken = {
