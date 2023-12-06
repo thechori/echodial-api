@@ -7,7 +7,6 @@ import { extractErrorMessage } from "../utils/error";
 const router = Router({ mergeParams: true });
 
 router.post("/", async (req, res) => {
-  console.log("creating tag");
   const { id } = res.locals.jwt_decoded;
   const { name, label, color } = req.body;
 
@@ -51,7 +50,24 @@ router.post("/", async (req, res) => {
   }
 });
 
-// router.get("/", async (req, res) => {});
+router.get("/", async (req, res) => {
+  const { id } = res.locals.jwt_decoded;
+  try {
+    // Only return custom properties that have been created by the specific user
+    const leadTags: LeadTag[] = await db("lead_tag")
+      .where("user_id", id)
+      .select(
+        "lead_tag.id as id",
+        "lead_tag.user_id as user_id",
+        "lead_tag.name as name",
+        "lead_tag.label as label",
+        "lead_tag.color as color"
+      );
+    return res.status(200).send(leadTags);
+  } catch (e) {
+    throw Error(extractErrorMessage(e));
+  }
+});
 
 // router.put("/:name", async (req, res) => {});
 
