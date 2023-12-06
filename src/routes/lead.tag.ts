@@ -21,7 +21,7 @@ router.post("/", async (req, res) => {
   try {
     const existingRecords = await db<LeadTag>("lead_tag")
       .select()
-      .where({ label });
+      .where({ user_id: id, label });
     if (existingRecords.length > 0) {
       throw Error("Tag already exists!");
     }
@@ -40,10 +40,6 @@ router.post("/", async (req, res) => {
 
     return res.status(200).send(newLeadTag[0]);
   } catch (e) {
-    if ((e as { code: string }).code === "23505") {
-      throw Error("Tag already exists");
-    }
-
     throw Error(extractErrorMessage(e));
   }
 });
@@ -68,6 +64,7 @@ router.get("/", async (req, res) => {
 
 router.delete("/:name", async (req, res) => {
   const { name } = req.params;
+  const { id } = res.locals.jwt_decoded;
 
   if (name === null) {
     return res.status(400).send("Missing `name` field");
@@ -76,7 +73,7 @@ router.delete("/:name", async (req, res) => {
   try {
     const deletionResult = await db<LeadTag>("lead_tag")
       .del()
-      .where("name", name);
+      .where({ user_id: id, name });
     return res.status(200).send("Successfully deleted!");
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
