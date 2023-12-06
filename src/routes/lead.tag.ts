@@ -53,7 +53,6 @@ router.post("/", async (req, res) => {
 router.get("/", async (req, res) => {
   const { id } = res.locals.jwt_decoded;
   try {
-    // Only return custom properties that have been created by the specific user
     const leadTags: LeadTag[] = await db("lead_tag")
       .where("user_id", id)
       .select(
@@ -70,5 +69,20 @@ router.get("/", async (req, res) => {
 });
 
 // router.put("/:name", async (req, res) => {});
+router.delete("/:name", async (req, res) => {
+  const { name } = req.params;
 
+  if (name === null) {
+    return res.status(400).send("Missing `name` field");
+  }
+
+  try {
+    const deletionResult = await db<LeadTag>("lead_tag")
+      .del()
+      .where("name", name);
+    return res.status(200).send("Successfully deleted!");
+  } catch (e) {
+    return res.status(500).send({ message: extractErrorMessage(e) });
+  }
+});
 export default router;
