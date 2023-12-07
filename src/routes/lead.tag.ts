@@ -62,18 +62,24 @@ router.get("/", async (req, res) => {
   }
 });
 
-router.delete("/:name", async (req, res) => {
-  const { name } = req.params;
+router.delete("/:tag_id", async (req, res) => {
+  const { tag_id } = req.params;
   const { id } = res.locals.jwt_decoded;
 
-  if (name === null) {
-    return res.status(400).send("Missing `name` field");
+  if (tag_id === null) {
+    return res.status(400).send("Missing `tag_id` field");
   }
 
   try {
+    const existingRecords = await db<LeadTag>("lead_tag")
+      .select()
+      .where({ user_id: id, id: parseInt(tag_id) });
+    if (existingRecords.length < 1) {
+      throw Error("Tag does not exist");
+    }
     const deletionResult = await db<LeadTag>("lead_tag")
       .del()
-      .where({ user_id: id, name });
+      .where({ user_id: id, id: parseInt(tag_id) });
     return res.status(200).send("Successfully deleted!");
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });
