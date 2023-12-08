@@ -16,6 +16,7 @@ import leadStandardPropertyRouter from "./lead.property.standard";
 import leadCustomPropertyRouter from "./lead.property.custom";
 import leadPropertyGroupRouter from "./lead.property.group";
 import leadPropertyTypeRouter from "./lead.property.type";
+import leadTagRouter from "./lead.tag";
 
 // Handle the bulk upload of Leads via CSV files
 const upload = multer({ dest: "tmp/csv/" });
@@ -30,6 +31,7 @@ router.use("/property/standard", authMiddleware, leadStandardPropertyRouter);
 router.use("/property/custom", authMiddleware, leadCustomPropertyRouter);
 router.use("/property/type", authMiddleware, leadPropertyTypeRouter);
 router.use("/property/group", authMiddleware, leadPropertyGroupRouter);
+router.use("/tag", authMiddleware, leadTagRouter);
 
 // Get all Leads
 router.get("/", async (req, res) => {
