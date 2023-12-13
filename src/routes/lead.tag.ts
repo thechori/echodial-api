@@ -54,7 +54,7 @@ router.get("/", async (req, res) => {
         "lead_tag.user_id as user_id",
         "lead_tag.name as name",
         "lead_tag.label as label",
-        "lead_tag.color as color"
+        "lead_tag.color as color",
       );
     return res.status(200).send(leadTags);
   } catch (e) {
@@ -77,9 +77,10 @@ router.delete("/:tag_id", async (req, res) => {
     if (existingRecords.length < 1) {
       throw Error("Tag does not exist");
     }
-    const deletionResult = await db<LeadTag>("lead_tag")
+    await db<LeadTag>("lead_tag")
       .del()
       .where({ user_id: id, id: parseInt(tag_id) });
+
     return res.status(200).send("Successfully deleted!");
   } catch (e) {
     return res.status(500).send({ message: extractErrorMessage(e) });

@@ -20,6 +20,7 @@ import metricRouter from "./routes/metric";
 import bucketRouter from "./routes/bucket";
 import stripeRouter from "./routes/stripe";
 import trialCreditRouter from "./routes/trial-credit";
+import powerDialerRouter from "./routes/power-dialer";
 import envConfig from "./configs/env";
 import { errorHandler } from "./middlewares/error-handler";
 
@@ -52,6 +53,7 @@ app.use("/metric", authMiddleware, metricRouter);
 app.use("/bucket", authMiddleware, bucketRouter);
 app.use("/stripe", authMiddleware, stripeRouter);
 app.use("/trial-credit", authMiddleware, trialCreditRouter);
+app.use("/power-dialer", powerDialerRouter);
 
 // Error handling middleware (via express-async-errors)
 app.use(errorHandler);
