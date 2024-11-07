@@ -2,7 +2,7 @@
 
 Node.js Express backend for the EchoDial product
 
-Open sourced on 2024-11-07
+*Open sourced on 2024-11-07*
 
 ## Requirements
 
