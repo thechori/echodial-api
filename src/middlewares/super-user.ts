@@ -10,7 +10,7 @@ dotenv.config();
 export const superUserAuthMiddleware: RequestHandler = async (
   req,
   res,
-  next,
+  next
 ) => {
   const { authorization } = req.headers;
 
@@ -24,13 +24,13 @@ export const superUserAuthMiddleware: RequestHandler = async (
     const token = authorization.split(" ")[1];
     const jwt_decoded = (await jwt.verify(
       token,
-      envConfig.bcryptSecret,
+      envConfig.bcryptSecret
     )) as JwtPayload;
 
     // TODO: create DB table of super users and check to see if this user is in that group
     // Validate person is a Super User
     const { email } = jwt_decoded;
-    if (email !== "thechori@gmail.com") {
+    if (email !== process.env.SUPER_USER_EMAIL) {
       return res.status(500).send({ message: "Super user access required" });
     }
 
